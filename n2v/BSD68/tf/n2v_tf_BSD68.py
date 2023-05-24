@@ -45,7 +45,7 @@ X_val = np.load(
     data_path
     / "BSD68_reproducibility"
     / "BSD68_reproducibility_data"
-    / "train"
+    / "val"
     / "DCNN400_validation_gaussian25.npy"
 )
 
