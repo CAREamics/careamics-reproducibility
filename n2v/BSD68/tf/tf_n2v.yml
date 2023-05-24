@@ -1,0 +1,12 @@
+name: tf-n2v
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - cudatoolkit=11.2
+  - cudnn=8.1
+  - pip
+  - pip:
+      - tensorflow==2.10.*
+      - n2v==0.3.2
