@@ -151,3 +151,7 @@ std = np.round(np.std(psnrs), 2)
 std_noisy = np.round(np.std(psnrs_noisy), 2)
 print(f"PSNR (noisy): {avg_noisy} ± {std_noisy}")
 print(f"PSNR (without tta): {avg} ± {std}")
+
+# Save results
+path_results = Path(__file__).parent / "results"
+np.save(path_results / "prediction_tf_n2v_bsd68_gaussian25.npy", np.array(pred))
