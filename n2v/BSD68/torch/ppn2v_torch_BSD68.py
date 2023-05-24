@@ -141,7 +141,7 @@ pred = []
 psnrs = []
 psnrs_noisy = []
 for gt, img in zip(groundtruth_data, test_data):
-    prediction, _ = prediction.tiledPredict(
+    prediction = prediction.tiledPredict(
         img, net, ps=128, overlap=32, noiseModel=None, device=device, outScaling=10
     )
     pred.append(prediction)
