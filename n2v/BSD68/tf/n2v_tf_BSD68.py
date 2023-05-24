@@ -27,9 +27,11 @@ print(tf.config.list_physical_devices("GPU"))
 data_path = Path(__file__).parent.parent / "data"
 if not data_path.exists():
     data_path.mkdir()
+print(f"Path to data: {data_path}")
 
 portfolio = Portfolio()
-portfolio.denoising.N2V_BSD68.download(data_path)
+paths = portfolio.denoising.N2V_BSD68.download(data_path)
+print(f"Files downloaded to: {paths}")
 
 # Load training data
 X_train = np.load(
