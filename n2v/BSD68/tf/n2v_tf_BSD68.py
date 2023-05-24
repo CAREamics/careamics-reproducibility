@@ -2,10 +2,12 @@
 # coding: utf-8
 
 # Noise2Void - 2D Example for BSD68 Data
+# TensorFlow implementation
 # --------------------------------------
 # The data used in this notebook is the same as presented in the paper, and this
 # script follows the jupyter notebook.
 
+from pathlib import Path
 import numpy as np
 import tensorflow as tf
 from microscopy_portfolio import Portfolio
@@ -22,7 +24,7 @@ print(tf.config.list_physical_devices("GPU"))
 #############################################
 
 # Data Preparation
-data_path = __file__.parent.parent / "data"
+data_path = Path(__file__).parent.parent / "data"
 if not data_path.exists():
     data_path.mkdir()
 

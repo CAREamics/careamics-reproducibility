@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+
+# Noise2Void - 2D Example for BSD68 Data
+# torch implementation (PPN2V)
+# --------------------------------------
+# The data used in this notebook is the same as presented in the PPN2V paper.
+
+
 from pathlib import Path
 
 from microscopy_portfolio import Portfolio
@@ -21,7 +28,7 @@ print(f"Device {device} found.")
 #############################################
 
 # Data Preparation
-data_path = __file__.parent.parent / "data"
+data_path = Path(__file__).parent.parent / "data"
 if not data_path.exists():
     data_path.mkdir()
 
