@@ -9,7 +9,7 @@
 ```bash
 conda create -n tf-n2v python=3.9
 conda activate tf-n2v
-conda install -c conda-forge cudatoolkit=11.2 cudnn=8.1
+conda install -c conda-forge cudatoolkit=11.3 cudnn=8.1
 pip install tensorflow=3.10 n2v microscopy-portfolio
 ```
 
