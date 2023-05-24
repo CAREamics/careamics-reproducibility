@@ -141,11 +141,11 @@ pred = []
 psnrs = []
 psnrs_noisy = []
 for gt, img in zip(groundtruth_data, test_data):
-    prediction = prediction.tiledPredict(
+    pred_arr = prediction.tiledPredict(
         img, net, ps=128, overlap=32, noiseModel=None, device=device, outScaling=10
     )
-    pred.append(prediction)
-    psnrs.append(PSNR(gt, prediction))
+    pred.append(pred_arr)
+    psnrs.append(PSNR(gt, pred_arr))
     psnrs_noisy.append(PSNR(gt, img))
 
 # Compute mean and std
