@@ -34,14 +34,14 @@ portfolio.denoising.N2V_BSD68.download(data_path)
 # Load training data
 X_train = np.load(
     data_path
-    / "BSD68_reproducibility_data"
+    / "BSD68_reproducibility"
     / "BSD68_reproducibility_data"
     / "train"
     / "DCNN400_train_gaussian25.npy"
 )
 X_val = np.load(
     data_path
-    / "BSD68_reproducibility_data"
+    / "BSD68_reproducibility"
     / "BSD68_reproducibility_data"
     / "train"
     / "DCNN400_validation_gaussian25.npy"
@@ -83,7 +83,7 @@ print(vars(config))
 #############################################
 
 # A name used to identify the model
-model_name = "BSD68_reproducability_5x5"
+model_name = "BSD68_reproducibility_5x5"
 
 # Base directory in which our model will live
 basedir = "models"
@@ -110,7 +110,7 @@ def PSNR(gt, img):
 # Load ground test ground truth
 groundtruth_data = np.load(
     data_path
-    / "BSD68_reproducibility_data"
+    / "BSD68_reproducibility"
     / "BSD68_reproducibility_data"
     / "train"
     / "bsd68_groundtruth.npy",
@@ -118,7 +118,7 @@ groundtruth_data = np.load(
 )
 test_data = np.load(
     data_path
-    / "BSD68_reproducibility_data"
+    / "BSD68_reproducibility"
     / "BSD68_reproducibility_data"
     / "train"
     / "bsd68_gaussian25.npy",
