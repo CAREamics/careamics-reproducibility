@@ -8,8 +8,8 @@
 ```bash
 conda create -n torch-n2v python=3.9
 conda activate torch-n2v
-conda install pytorch torchvision pytorch-cuda=11.8 -c pytorch -c nvidia
-pip install git+https://github.com/juglab/PPN2V.git
+conda install pytorch torchvision pytorch-cuda=11.8 numpy=1.20 -c pytorch -c nvidia
+pip install microscope-portfolio git+https://github.com/juglab/PPN2V.git
 ```
 
 ## Configuration

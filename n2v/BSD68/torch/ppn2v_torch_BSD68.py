@@ -84,6 +84,10 @@ net = UNet(
 #############################################
 ##############   Training   #################
 #############################################
+model_path = Path(__file__).parent / "model"
+if not model_path.exists():
+    model_path.mkdir()
+
 trainHist, valHist = training.trainNetwork(
     net=net,
     trainData=X_train,
