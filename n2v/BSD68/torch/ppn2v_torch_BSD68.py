@@ -115,7 +115,7 @@ groundtruth_data = np.load(
     data_path
     / "BSD68_reproducibility"
     / "BSD68_reproducibility_data"
-    / "train"
+    / "test"
     / "bsd68_groundtruth.npy",
     allow_pickle=True,
 )
@@ -123,7 +123,7 @@ test_data = np.load(
     data_path
     / "BSD68_reproducibility"
     / "BSD68_reproducibility_data"
-    / "train"
+    / "test"
     / "bsd68_gaussian25.npy",
     allow_pickle=True,
 )
