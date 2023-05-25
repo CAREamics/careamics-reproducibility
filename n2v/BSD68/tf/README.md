@@ -60,8 +60,10 @@ python n2v_tf_BSD68.py
 ## Results
 
 From paper:
-TODO
+27.71
+
+From notebook:
+27.81
 
 From script:
-TODO
-
+26.7 +/- 2.53
