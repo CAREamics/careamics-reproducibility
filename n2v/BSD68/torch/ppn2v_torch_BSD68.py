@@ -12,10 +12,8 @@ from microscopy_portfolio import Portfolio
 import numpy as np
 import torch
 
-from unet.model import UNet
-from pn2v import utils
-from pn2v import training
-from pn2v import prediction
+from ppn2v.unet import UNet
+from ppn2v.pn2v import utils, training, prediction
 
 
 # See if we can use a GPU
