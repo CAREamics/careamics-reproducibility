@@ -11,15 +11,22 @@ The various implementations have certains differences which complicate
 reproducing exactly the same training conditions. In particular parameters
 can have different definition or default values:
 
+- Model architecture:
+    - TF: UNet with batch norm
+    - torch (PPN2V): UNet without batch norm layers
+    - CAREamics:
 - Number of masked pixels:
+    - TF: Percentage of pixels in patch (default 0.198%)
+    - torch (PPN2V): Grid ??
+    - CAREamics:
+- N2V neighborhood:
     - TF:
     - torch (PPN2V):
     - CAREamics:
-- N2V neighborhood
 - Epoch: 
-    - TF:
-    - torch (PPN2V):
-    - CAREamics:
+    - TF: An epoch is a number of steps
+    - torch (PPN2V): An epoch is a number of steps
+    - CAREamics: An epoch is an iteration through all patches
 
 
 ## Results
