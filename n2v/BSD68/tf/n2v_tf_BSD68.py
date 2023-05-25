@@ -154,4 +154,6 @@ print(f"PSNR (without tta): {avg} ± {std}")
 
 # Save results
 path_results = Path(__file__).parent / "results"
-np.save(path_results / "prediction_tf_n2v_bsd68_gaussian25.npy", np.array(pred))
+for i, img in enumerate(pred):
+    name = f"prediction_tf_n2v_bsd68_gaussian25_{i}.npy"
+    np.save(path_results / name, img)
