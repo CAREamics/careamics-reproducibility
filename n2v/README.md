@@ -8,9 +8,18 @@ Reproducibility between:
 - [CAREamics](https://github.com/CAREamics/careamics-restoration)
 
 The various implementations have certains differences which complicate
-reproducing exactly the same training conditions:
+reproducing exactly the same training conditions. In particular parameters
+can have different definition or default values:
+
+- Number of masked pixels:
+    - TF:
+    - torch (PPN2V):
+    - CAREamics:
 - N2V neighborhood
-- ??
+- Epoch: 
+    - TF:
+    - torch (PPN2V):
+    - CAREamics:
 
 
 ## Results
