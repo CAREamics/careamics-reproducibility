@@ -27,9 +27,9 @@ pip install microscope-portfolio git+https://github.com/juglab/PPN2V.git
 
 ## Results
 
-From paper:
-TODO
+From paper (PPN2V):
+Unknown
 
 From script:
-TODO
+27.34 +/- 3
 

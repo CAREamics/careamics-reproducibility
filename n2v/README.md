@@ -35,4 +35,4 @@ Using the scripts in this repository.
 
 |       |       TF      | torch (PPN2V) | CAREamics |
 |-------|---------------|---------------|-----------|
-| BSD68 | 26.7 +/- 2.53 |               |           |
+| BSD68 | 26.7 +/- 2.53 |  27.34 +/- 3  |           |
