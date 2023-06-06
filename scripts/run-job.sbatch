@@ -14,6 +14,10 @@ name=$1
 script=$2
 stats=$3
 
+echo "Name: $name"
+echo "Script: $script"
+echo "Stats: $stats"
+
 # check if conda is installed
 if ! command -v conda &> /dev/null; then
    echo "Conda could not be found."

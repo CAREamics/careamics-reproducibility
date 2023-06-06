@@ -164,4 +164,4 @@ if [ "${debug}" = true ]; then
    echo "Output stats script: $output_stats"
 fi
 
-echo "sbatch "$path_to_sbatch" --job-name="$name" --output="$log" "$name" "$script_full_path" "$output_stats""
+sbatch "$path_to_sbatch" --job-name="$name" --output="$log" "$name" "$script_full_path" "$output_stats"
