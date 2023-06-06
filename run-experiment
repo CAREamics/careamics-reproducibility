@@ -133,7 +133,7 @@ if [ "${debug}" = true ]; then
 fi
 
 # path to python script
-script_path="experiments""$method/$dataset/$name"
+script_path="experiments/""$method/$dataset/$name"
 script_name="$name-$dataset.py"
 script_full_path="$script_path/$script_name" 
 if [ "${debug}" = true ]; then
