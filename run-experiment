@@ -166,10 +166,10 @@ out="$logs_root""$name""_$timestamp""_stats.txt"
 path="$PWD/""$script_full_path"
 
 if [ "${debug}" = true ]; then
-   echo "Log script: $log"
+   echo "Log file: $log"
    echo "Output stats: $out"
    echo "Script path: $path"
 fi
 
 # run sbatch
-sbatch "$path_to_sbatch" --job-name="$name" --output="$log" "$name" "$path" "$out"
+sbatch "$path_to_sbatch" --job-name "$name" --output "$log" "$name" "$path" "$out"
