@@ -157,8 +157,9 @@ fi
 
 # run sbatch
 timestamp=$(date +%s)
-log="$name""_$timestamp.log"
-output_stats="$name""_$timestamp""_stats"
+log="logs/""$name""_$timestamp.log"
+path="$PWD""/$script_full_path"
+output_stats="logs/""$name""_$timestamp""_stats"
 if [ "${debug}" = true ]; then
    echo "Log script: $log"
    echo "Output stats script: $output_stats"

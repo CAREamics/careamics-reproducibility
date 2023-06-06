@@ -10,9 +10,9 @@
 source $HOME/.bashrc
 
 # variables
-name=$1
-script=$2
-stats=$3
+name=$3
+script=$4
+stats=$5
 
 echo "Name: $name"
 echo "Script: $script"
