@@ -11,7 +11,7 @@ name=$3
 script=$4
 stats=$5
 
-echo $SLURM_JOB_ID
+echo "Job ID: $SLURM_JOB_ID"
 echo "Name: $name"
 echo "Script: $script"
 echo "Stats: $stats"
@@ -41,6 +41,3 @@ fi
 
 # run python script
 python "$script"
-
-# statistics
-sstat -j $SLURM_JOB_ID
