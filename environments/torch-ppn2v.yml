@@ -1,4 +1,4 @@
-name: torch-n2v
+name: torch-ppn2v
 channels:
   - pytorch
   - nvidia
