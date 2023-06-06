@@ -7,9 +7,9 @@
 source $HOME/.bashrc
 
 # variables
-name=$3
-script=$4
-stats=$5
+name=$5
+script=$6
+stats=$7
 
 echo "Job ID: $SLURM_JOB_ID"
 echo "Name: $name"
