@@ -13,6 +13,7 @@ script=$7
 
 echo "Job ID: $SLURM_JOB_ID"
 echo "Name: $name"
+echo "Env: $env"
 echo "Script: $script"
 
 # check if conda is installed
@@ -38,4 +39,5 @@ if [ "$name" = "tf-n2v" ]; then
 fi
 
 # run python script
+echo "Run script"
 python "$script"
