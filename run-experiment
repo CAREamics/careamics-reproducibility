@@ -155,14 +155,21 @@ if [ "${debug}" = true ]; then
    echo "Sbatch script: $path_to_sbatch"
 fi
 
-# run sbatch
+# create logs directory
+mkdir "logs"
+logs_root="$PWD""/logs/"
+
+# variables
 timestamp=$(date +%s)
-log="logs/""$name""_$timestamp.log"
-path="$PWD""/$script_full_path"
-output_stats="logs/""$name""_$timestamp""_stats"
+log="$logs_root""$name""_$timestamp.log"
+out="$logs_root""$name""_$timestamp""_stats"
+path="$PWD""$script_full_path"
+
 if [ "${debug}" = true ]; then
    echo "Log script: $log"
-   echo "Output stats script: $output_stats"
+   echo "Output stats: $out"
+   echo "Script path: $path"
 fi
 
-sbatch "$path_to_sbatch" --job-name="$name" --output="$log" "$name" "$script_full_path" "$output_stats"
+# run sbatch
+sbatch "$path_to_sbatch" --job-name="$name" --output="$log" "$name" "$path" "$out"
