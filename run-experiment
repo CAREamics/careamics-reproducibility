@@ -163,7 +163,7 @@ logs_root="$PWD""/logs/"
 timestamp=$(date +%s)
 log="$logs_root""$name""_$timestamp.log"
 out="$logs_root""$name""_$timestamp""_stats.txt"
-path="$PWD""$script_full_path"
+path="$PWD/""$script_full_path"
 
 if [ "${debug}" = true ]; then
    echo "Log script: $log"
