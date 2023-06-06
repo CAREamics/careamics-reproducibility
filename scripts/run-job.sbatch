@@ -44,4 +44,4 @@ fi
 python "$script"
 
 # write statistics
-sstat -j $SLURM_JOB_ID > "$stats"
+sstat -j $SLURM_JOB_ID
