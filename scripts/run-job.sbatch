@@ -1,11 +1,8 @@
 #!/bin/bash
-#SBATCH --partition=gpuq
+#SBATCH --partition=cpuq
 #SBATCH --nodes=1
-#SBATCH --gres=gpu:1
-#SBATCH --mem=64GB
-#SBATCH --ntasks=2
-#SBATCH --cpus-per-task=4 
-#SBATCH --time=8:00:00
+#SBATCH --cpus-per-task=1 
+#SBATCH --time=1:00:00
 
 source $HOME/.bashrc
 
@@ -27,21 +24,22 @@ fi
 # check if environment exists
 if ! conda env list | grep -q "$name"; then
    echo "Creating conda environment $name"
-   conda env create -y -f "$name"
+   #conda env create -y -f "$name"
 else
    echo "Conda environment $name already exists."
 fi
 
 # activate environment
-conda activate "$name"
+#conda activate "$name"
 
 # if tensorflow, set environment variable
 if [ "$name" = "tf-n2v" ]; then
-   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CONDA_PREFIX/lib/
+   echo "export TF"
+   #export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CONDA_PREFIX/lib/
 fi
 
 # run python script
 python "$script"
 
-# write statistics
+# statistics
 sstat -j $SLURM_JOB_ID
