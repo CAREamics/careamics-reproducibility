@@ -11,6 +11,7 @@ name=$3
 script=$4
 stats=$5
 
+echo $SLURM_JOB_ID
 echo "Name: $name"
 echo "Script: $script"
 echo "Stats: $stats"
