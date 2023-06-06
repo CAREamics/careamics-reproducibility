@@ -8,13 +8,12 @@ source $HOME/.bashrc
 
 # variables
 name=$5
-script=$6
-stats=$7
+env=$6
+script=$7
 
 echo "Job ID: $SLURM_JOB_ID"
 echo "Name: $name"
 echo "Script: $script"
-echo "Stats: $stats"
 
 # check if conda is installed
 if ! command -v conda &> /dev/null; then
@@ -25,7 +24,7 @@ fi
 # check if environment exists
 if ! conda env list | grep -q "$name"; then
    echo "Creating conda environment $name"
-   #conda env create -y -f "$name"
+   #conda env create -y -f "$env"
 else
    echo "Conda environment $name already exists."
 fi
@@ -35,8 +34,7 @@ fi
 
 # if tensorflow, set environment variable
 if [ "$name" = "tf-n2v" ]; then
-   echo "export TF"
-   #export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CONDA_PREFIX/lib/
+   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CONDA_PREFIX/lib/
 fi
 
 # run python script
