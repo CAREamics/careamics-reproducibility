@@ -10,11 +10,13 @@ source $HOME/.bashrc
 name=$1
 env=$2
 script=$3
+log=$4
 
 echo "Job ID: $SLURM_JOB_ID"
 echo "Name: $name"
 echo "Env: $env"
 echo "Script: $script"
+echo "Log: $log"
 
 # check if conda is installed
 if ! command -v conda &> /dev/null; then
@@ -45,4 +47,5 @@ echo "Run script"
 python $script
 
 # write efficiency
-sh scripts/write-efficiency.sh $SLURM_JOB_ID "efficiency/"
+path_to_log="$log""efficiency/"
+sh scripts/write-efficiency.sh $SLURM_JOB_ID $path_to_log

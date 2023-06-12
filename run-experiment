@@ -171,4 +171,4 @@ if [ "${debug}" = true ]; then
 fi
 
 # run sbatch
-sbatch --job-name=$name --output=$log $path_to_sbatch $name $env $path 
+sbatch --job-name=$name --output=$log $path_to_sbatch $name $env $path $log
