@@ -32,6 +32,7 @@ fi
 
 # activate environment
 conda activate $name
+echo "Activated $CONDA_DEFAULT_ENV"
 
 # if tensorflow, set environment variable
 if [ $name = "tf-n2v" ]; then
