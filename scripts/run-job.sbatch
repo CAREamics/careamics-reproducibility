@@ -48,4 +48,5 @@ python $script
 
 # write efficiency
 path_to_log="$log""efficiency/"
+mkdir -p $path_to_log
 sh scripts/write-efficiency.sh $SLURM_JOB_ID $path_to_log
