@@ -43,3 +43,6 @@ fi
 # run python script
 echo "Run script"
 python $script
+
+# write efficiency
+sh scripts/write-efficiency.sh $SLURM_JOB_ID "efficiency/"
