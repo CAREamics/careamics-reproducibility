@@ -7,9 +7,9 @@
 source $HOME/.bashrc
 
 # variables
-name=$3
-env=$4
-script=$5
+name=$1
+env=$2
+script=$3
 
 echo "Job ID: $SLURM_JOB_ID"
 echo "Name: $name"
@@ -40,4 +40,4 @@ fi
 
 # run python script
 echo "Run script"
-python "$script"
+python $script
