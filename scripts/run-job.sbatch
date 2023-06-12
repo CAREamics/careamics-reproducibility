@@ -25,7 +25,7 @@ fi
 # check if environment exists
 if ! conda env list | grep -q "$name"; then
    echo "Creating conda environment $name"
-   conda env create -y -f "$env"
+   conda env create -f "$env"
 else
    echo "Conda environment $name already exists."
 fi
