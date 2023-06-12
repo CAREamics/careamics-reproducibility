@@ -25,16 +25,17 @@ fi
 # check if environment exists
 if ! conda env list | grep -q "$name"; then
    echo "Creating conda environment $name"
-   #conda env create -y -f "$env"
+   conda env create -y -f "$env"
 else
    echo "Conda environment $name already exists."
 fi
 
 # activate environment
-#conda activate "$name"
+conda activate $name
 
 # if tensorflow, set environment variable
-if [ "$name" = "tf-n2v" ]; then
+if [ $name = "tf-n2v" ]; then
+   echo "$name: export CUDA path" 
    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CONDA_PREFIX/lib/
 fi
 
