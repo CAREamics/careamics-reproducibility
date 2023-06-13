@@ -50,9 +50,9 @@ echo "Run script"
 python $script
 
 # run sacct and seff
-seff $job_id > "$logs-seff.txt"
+seff $SLURM_JOB_ID > "$logs-seff.txt"
 
 # output sacct to file
 #export MODULEPATH=/share/apps/spack/testing/modules-files/linux-centos8-skylake_avx512/:$MODULEPATH
 #module load python-3.9.10/py-reportseff/2.7.2 
-sacct --format JobID,JobName,Partition,AveRSS,MaxRSS,ReqMem,State,AllocCPUS -j "$job_id" > "$logs-sacct.txt"
+sacct --format JobID,JobName,Partition,AveRSS,MaxRSS,ReqMem,State,AllocCPUS -j $SLURM_JOB_ID > "$logs-sacct.txt"
