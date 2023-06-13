@@ -171,5 +171,6 @@ path_results = experiment / "results"
 if not path_results.exists():
     path_results.mkdir()
 
-results = np.array(pred)
-np.save(path_results / "prediction_n2v_torch_ppn2v_bsd68_gaussian25.npy", img)
+for i, img in enumerate(pred):
+    name = f"prediction_tf_n2v_bsd68_gaussian25_{i}.npy"
+    np.save(path_results / name, img)
