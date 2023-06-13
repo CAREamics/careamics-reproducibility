@@ -161,30 +161,17 @@ logs_root="$PWD""/logs/"
 
 # variables
 timestamp=$(date +%s)
-log="$logs_root""$name""_$timestamp.log"
+log_stem="$logs_root""$name""_$timestamp"
+log="$log_stem.log"
 path="$PWD/""$script_full_path"
 env="$PWD/""$env_path"
 
 if [ "${debug}" = true ]; then
+   echo "Logs stem: $log_stem"
    echo "Log file: $log"
    echo "Script path: $path"
+   echo "Env path: $env"
 fi
 
 # run sbatch
-sbatch --job-name=$name --output=$log $path_to_sbatch $name $env $path
-
-# get job id
-job_id=$(squeue | grep $name | awk '{print $1}')
-
-# start monitoring job
-monitor_log="$logs_root""monitor-""$name""_$timestamp.log"
-path_to_log="$logs_root""efficiency/"
-
-if [ "${debug}" = true ]; then
-   echo "Job ID: $job_id"
-   echo "Monitor log: $monitor_log"
-   echo "Path to log: $path_to_log"
-fi
-
-mkdir -p $path_to_log
-sbatch --job-name="$name""-monitor" --output=$monitor_log scripts/write-efficiency.sbatch $job_id $path_to_log
+sbatch --job-name=$name --output=$log $path_to_sbatch $name $env $path $log_stem
