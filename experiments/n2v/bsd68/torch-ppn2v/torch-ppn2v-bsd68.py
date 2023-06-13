@@ -21,14 +21,15 @@ device = utils.getDevice()
 print(f"Device {device} found.")
 
 # Root to save data and model
-root = Path("/scratch", os.getlogin(), "reproducibility")
+user = os.environ.get("USER")
+root = Path("/scratch", user, "reproducibility")
 if not root.exists():
     root.mkdir(parents=True)
 
 # Experiment folder
 experiment = Path(root, "n2v", "torch-ppn2v-bsd68")
-if not root.exists():
-    root.mkdir(parents=True)
+if not experiment.exists():
+    experiment.mkdir(parents=True)
 
 #############################################
 ###############   Data   ####################

@@ -22,15 +22,14 @@ print(tf.config.list_physical_devices("GPU"))
 
 # Root to save data and model
 user = os.environ.get("USER")
-print(f"User: {user}")
 root = Path("/scratch") / user / "reproducibility"
 if not root.exists():
     root.mkdir(parents=True)
 
 # Experiment folder
-experiment = Path(root, "n2v", "torch-ppn2v-bsd68")
-if not root.exists():
-    root.mkdir(parents=True)
+experiment = Path(root, "n2v", "tf-n2v-bsd68")
+if not experiment.exists():
+    experiment.mkdir(parents=True)
 
 #############################################
 ###############   Data   ####################
