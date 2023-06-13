@@ -157,7 +157,7 @@ fi
 
 
 # create logs directory
-logs_root="/scratch/""$USER""reproducibility/logs/"
+logs_root="/scratch/""$USER""/reproducibility/logs/"
 mkdir -p $logs_root
 
 # variables
