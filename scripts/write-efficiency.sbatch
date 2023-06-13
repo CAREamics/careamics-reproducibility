@@ -3,7 +3,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --time=09:00:00
+#SBATCH --time=00:05:00
 #SBATCH --mem=64MB
 
 # variables

@@ -155,7 +155,6 @@ if [ "${debug}" = true ]; then
    echo "Sbatch script: $path_to_sbatch"
 fi
 
-
 # create logs directory
 logs_root="/scratch/""$USER""/reproducibility/logs/"
 mkdir -p $logs_root
