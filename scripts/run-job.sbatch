@@ -13,13 +13,11 @@ source $HOME/.bashrc
 name=$1
 env=$2
 script=$3
-log=$4
 
 echo "Job ID: $SLURM_JOB_ID"
 echo "Name: $name"
 echo "Env: $env"
 echo "Script: $script"
-echo "Log: $log"
 
 # check if conda is installed
 if ! command -v conda &> /dev/null; then
@@ -44,11 +42,6 @@ if [ $name = "tf-n2v" ]; then
    echo "$name: export CUDA path" 
    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CONDA_PREFIX/lib/
 fi
-
-# start monitoring job
-path_to_log="$log""efficiency/"
-mkdir -p $path_to_log
-sbatch --job-name="$name""-monitor" --output="monitor-""$log" scripts/write-efficiency.sbatch $SLURM_JOB_ID $path_to_log
 
 # run python script
 echo "Run script"

@@ -9,6 +9,9 @@
 job_id=$1
 output_folder=$2
 
+echo "Job ID: $job_id"
+echo "Output folder: $output_folder"
+
 # wait while job is running
 job_id_running=$(squeue | grep $job_id | awk '{print $1}')
 while [[ -n $job_id_running ]]

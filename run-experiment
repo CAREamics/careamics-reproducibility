@@ -171,4 +171,13 @@ if [ "${debug}" = true ]; then
 fi
 
 # run sbatch
-sbatch --job-name=$name --output=$log $path_to_sbatch $name $env $path $logs_root
+sbatch --job-name=$name --output=$log $path_to_sbatch $name $env $path
+
+# get job id
+job_id=$(squeue | grep $job_id | awk '{print $1}')
+
+# start monitoring job
+monitor_log="$logs_root""monitor-""$name""_$timestamp.log"
+path_to_log="$logs_root""efficiency/"
+mkdir -p $path_to_log
+sbatch --job-name="$name""-monitor" --output=$monitor_log scripts/write-efficiency.sbatch $job_id $path_to_log
