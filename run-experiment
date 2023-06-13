@@ -155,26 +155,27 @@ if [ "${debug}" = true ]; then
    echo "Sbatch script: $path_to_sbatch"
 fi
 
+
 # create logs directory
-mkdir -p "logs"
-logs_root="$PWD""/logs/"
+logs_root="/scratch/""$USER""reproducibility/logs/"
+mkdir -p $logs_root
 
 # variables
 timestamp=$(date +%s)
 log_stem="$logs_root""$name""_$timestamp"
 log="$log_stem.log"
-path="$PWD/""$script_full_path"
+script_path="$PWD/""$script_full_path"
 env="$PWD/""$env_path"
 
 if [ "${debug}" = true ]; then
    echo "Logs stem: $log_stem"
    echo "Log file: $log"
-   echo "Script path: $path"
+   echo "Script path: $script_path"
    echo "Env path: $env"
 fi
 
 # run main job
-sbatch --job-name=$name --output=$log $path_to_sbatch $name $env $path
+sbatch --job-name=$name --output=$log $path_to_sbatch $name $env $script_path
 
 # run sacct writing job
 job_id=$(squeue | grep $name | awk '{print $1}')
