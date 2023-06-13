@@ -5,7 +5,7 @@
 # --------------------------------------
 # The data used in this notebook is the same as presented in the PPN2V paper.
 
-
+import os
 from pathlib import Path
 
 from microscopy_portfolio import Portfolio
@@ -20,13 +20,22 @@ from ppn2v.pn2v import utils, training, prediction
 device = utils.getDevice()
 print(f"Device {device} found.")
 
+# Root to save data and model
+root = Path("/scratch", os.getlogin(), "reproducibility")
+if not root.exists():
+    root.mkdir(parents=True)
+
+# Experiment folder
+experiment = Path(root, "n2v", "torch-ppn2v-bsd68")
+if not root.exists():
+    root.mkdir(parents=True)
 
 #############################################
 ###############   Data   ####################
 #############################################
 
 # Data Preparation
-data_path = Path(__file__).parent.parent / "data"
+data_path = root / "data"
 if not data_path.exists():
     data_path.mkdir()
 print(f"Path to data: {data_path}")
@@ -82,7 +91,7 @@ net = UNet(
 #############################################
 ##############   Training   #################
 #############################################
-model_path = Path(__file__).parent / "model"
+model_path = experiment / "model"
 if not model_path.exists():
     model_path.mkdir()
 
@@ -131,8 +140,8 @@ test_data = np.load(
 )
 
 # Load weights
-model_path = Path("model", "last_N2V.net")
-net = torch.load(model_path)
+trained_model_path = model_path / "last_N2V.net"
+net = torch.load(trained_model_path)
 
 # Predict
 pred = []
@@ -154,13 +163,12 @@ avg_noisy = np.round(np.mean(psnrs_noisy), 2)
 std = np.round(np.std(psnrs), 2)
 std_noisy = np.round(np.std(psnrs_noisy), 2)
 print(f"PSNR (noisy): {avg_noisy} ± {std_noisy}")
-print(f"PSNR (without tta): {avg} ± {std}")
+print(f"PSNR (prediction): {avg} ± {std}")
 
 # Save results
-path_results = Path(__file__).parent / "results"
+path_results = experiment / "results"
 if not path_results.exists():
     path_results.mkdir()
 
-for i, img in enumerate(pred):
-    name = f"prediction_tf_n2v_bsd68_gaussian25_{i}.npy"
-    np.save(path_results / name, img)
+results = np.array(pred)
+np.save(path_results / "prediction_n2v_torch_ppn2v_bsd68_gaussian25.npy", img)

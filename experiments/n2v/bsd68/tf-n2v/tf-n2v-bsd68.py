@@ -7,6 +7,7 @@
 # The data used in this notebook is the same as presented in the paper, and this
 # script follows the jupyter notebook.
 
+import os
 from pathlib import Path
 import numpy as np
 import tensorflow as tf
@@ -19,12 +20,22 @@ ssl._create_default_https_context = ssl._create_unverified_context
 # Check GPU availability
 print(tf.config.list_physical_devices("GPU"))
 
+# Root to save data and model
+root = Path("/scratch", os.getlogin(), "reproducibility")
+if not root.exists():
+    root.mkdir(parents=True)
+
+# Experiment folder
+experiment = Path(root, "n2v", "torch-ppn2v-bsd68")
+if not root.exists():
+    root.mkdir(parents=True)
+
 #############################################
 ###############   Data   ####################
 #############################################
 
 # Data Preparation
-data_path = Path(__file__).parent.parent / "data"
+data_path = root / "data"
 if not data_path.exists():
     data_path.mkdir()
 print(f"Path to data: {data_path}")
@@ -88,10 +99,12 @@ print(vars(config))
 model_name = "BSD68_reproducibility_5x5"
 
 # Base directory in which our model will live
-basedir = "models"
+model_path = experiment / "model"
+if not model_path.exists():
+    model_path.mkdir()
 
 # We are now creating our network model.
-model = N2V(config, model_name, basedir=basedir)
+model = N2V(config, model_name, basedir=model_path)
 model.prepare_for_training(metrics=())
 
 #############################################
@@ -150,13 +163,12 @@ avg_noisy = np.round(np.mean(psnrs_noisy), 2)
 std = np.round(np.std(psnrs), 2)
 std_noisy = np.round(np.std(psnrs_noisy), 2)
 print(f"PSNR (noisy): {avg_noisy} ± {std_noisy}")
-print(f"PSNR (without tta): {avg} ± {std}")
+print(f"PSNR (pred without tta): {avg} ± {std}")
 
 # Save results
-path_results = Path(__file__).parent / "results"
+path_results = experiment / "results"
 if not path_results.exists():
     path_results.mkdir()
 
-for i, img in enumerate(pred):
-    name = f"prediction_tf_n2v_bsd68_gaussian25_{i}.npy"
-    np.save(path_results / name, img)
+results = np.array(pred)
+np.save(path_results / "prediction_n2v_tf_n2v_bsd68_gaussian25.npy", img)
