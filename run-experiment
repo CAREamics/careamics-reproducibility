@@ -176,6 +176,11 @@ fi
 # run main job
 sbatch --job-name=$name --output=$log $path_to_sbatch $name $env $script_path $log_stem
 
+# get job id, note that squeue truncates the job name to 8 characters
+job_id=$(squeue | grep ${name:0:8} | awk '{print $1}')
+if [ "${debug}" = true ]; then
+   echo "Job id: $job_id"
+fi
+
 # run sacct writing job
-job_id=$(squeue | grep $name | awk '{print $1}')
 sbatch --dependency=afterok:$job_id --job-name="$name""-monitor" --output="$log_stem""-monitor.log" scripts/write-efficiency.sbatch $job_id $log_stem
