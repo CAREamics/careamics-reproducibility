@@ -21,8 +21,6 @@ echo "Env: $env"
 echo "Script: $script"
 echo "Log: $log"
 
-exit 1
-
 # check if conda is installed
 if ! command -v conda &> /dev/null; then
    echo "Conda could not be found."
