@@ -13,13 +13,11 @@ source $HOME/.bashrc
 name=$1
 env=$2
 script=$3
-logs=$4
 
 echo "Job ID: $SLURM_JOB_ID"
 echo "Name: $name"
 echo "Env: $env"
 echo "Script: $script"
-echo "Logs: $logs"
 
 # check if conda is installed
 if ! command -v conda &> /dev/null; then
@@ -48,11 +46,3 @@ fi
 # run python script
 echo "Run script"
 python $script
-
-# run sacct and seff
-seff $SLURM_JOB_ID > "$logs-seff.txt"
-
-# output sacct to file
-#export MODULEPATH=/share/apps/spack/testing/modules-files/linux-centos8-skylake_avx512/:$MODULEPATH
-#module load python-3.9.10/py-reportseff/2.7.2 
-sacct --format JobID,JobName,Partition,AveRSS,MaxRSS,ReqMem,State,AllocCPUS -j $SLURM_JOB_ID > "$logs-sacct.txt"

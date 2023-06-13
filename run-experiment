@@ -173,5 +173,9 @@ if [ "${debug}" = true ]; then
    echo "Env path: $env"
 fi
 
-# run sbatch
-sbatch --job-name=$name --output=$log $path_to_sbatch $name $env $path $log_stem
+# run main job
+sbatch --job-name=$name --output=$log $path_to_sbatch $name $env $path
+
+# run sacct writing job
+job_id=$(squeue | grep $name | awk '{print $1}')
+sbatch --dependency=afterok:$job_id --job-name="$name""-monitor" --output="$log_stem""-monitor.log" scripts/write-efficiency.sbatch $SLURM_JOB_ID $log_stem
