@@ -46,9 +46,9 @@ if [ $name = "tf-n2v" ]; then
 fi
 
 # start monitoring job
-#path_to_log="$log""efficiency/"
-#mkdir -p $path_to_log
-#sbatch --job-name="$name""-monitor" --output="monitor-""$log" scripts/write-efficiency.sbatch $SLURM_JOB_ID $path_to_log
+path_to_log="$log""efficiency/"
+mkdir -p $path_to_log
+sbatch --job-name="$name""-monitor" --output="monitor-""$log" scripts/write-efficiency.sbatch $SLURM_JOB_ID $path_to_log
 
 # run python script
 echo "Run script"
