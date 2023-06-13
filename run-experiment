@@ -112,12 +112,12 @@ case "$library" in
 
    "n2v")
       name="tf-n2v"
-      env_path="environments/tf_n2v.yml"
+      env_path="environments/tf-n2v.yml"
       ;;
 
    "ppn2v")
       name="torch-ppn2v"
-      env_path="environments/torch_ppn2v.yml"
+      env_path="environments/torch-ppn2v.yml"
       ;;
 
    "test_library")
