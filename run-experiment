@@ -174,7 +174,7 @@ if [ "${debug}" = true ]; then
 fi
 
 # run main job
-sbatch --job-name=$name --output=$log $path_to_sbatch $name $env $script_path
+sbatch --job-name=$name --output=$log $path_to_sbatch $name $env $script_path $log_stem
 
 # run sacct writing job
 job_id=$(squeue | grep $name | awk '{print $1}')

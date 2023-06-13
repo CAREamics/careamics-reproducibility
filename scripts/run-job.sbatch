@@ -13,11 +13,13 @@ source $HOME/.bashrc
 name=$1
 env=$2
 script=$3
+log_stem=$4
 
 echo "Job ID: $SLURM_JOB_ID"
 echo "Name: $name"
 echo "Env: $env"
 echo "Script: $script"
+echo "Log stem: $log_stem"
 
 # check if conda is installed
 if ! command -v conda &> /dev/null; then
@@ -42,6 +44,9 @@ if [ $name = "tf-n2v" ]; then
    echo "$name: export CUDA path" 
    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CONDA_PREFIX/lib/
 fi
+
+# log GPU info
+nvidia-smi > "$log_stem""-gpu-info.txt"
 
 # run python script
 echo "Run script"

@@ -21,8 +21,9 @@ ssl._create_default_https_context = ssl._create_unverified_context
 print(tf.config.list_physical_devices("GPU"))
 
 # Root to save data and model
-print(f"User: {os.getlogin()}")
-root = Path("/scratch") / os.getlogin() / "reproducibility"
+user = os.environ.get("USER")
+print(f"User: {user}")
+root = Path("/scratch") / user / "reproducibility"
 if not root.exists():
     root.mkdir(parents=True)
 
