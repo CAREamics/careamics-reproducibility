@@ -21,6 +21,8 @@ echo "Env: $env"
 echo "Script: $script"
 echo "Log: $log"
 
+exit 1
+
 # check if conda is installed
 if ! command -v conda &> /dev/null; then
    echo "Conda could not be found."
@@ -45,11 +47,11 @@ if [ $name = "tf-n2v" ]; then
    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CONDA_PREFIX/lib/
 fi
 
+# start monitoring job
+#path_to_log="$log""efficiency/"
+#mkdir -p $path_to_log
+#sbatch --job-name="$name""-monitor" --output="monitor-""$log" scripts/write-efficiency.sbatch $SLURM_JOB_ID $path_to_log
+
 # run python script
 echo "Run script"
 python $script
-
-# write efficiency
-path_to_log="$log""efficiency/"
-mkdir -p $path_to_log
-sh scripts/write-efficiency.sh $SLURM_JOB_ID $path_to_log
