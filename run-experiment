@@ -53,6 +53,7 @@ validate_dataset() {
 }
 
 # Inspect arguments and echo the usage if necessary
+# TODO h shouldn't take arguments
 while getopts ':h:l:m:d:r' option; do
    case "$option" in
       h) 

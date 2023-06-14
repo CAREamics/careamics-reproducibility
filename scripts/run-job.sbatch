@@ -44,9 +44,14 @@ if [ $name = "tf-n2v" ]; then
    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CONDA_PREFIX/lib/
 fi
 
-# log GPU info
-nvidia-smi > "$log_stem""-gpu-info.txt"
+# start process to log GPU info
+nvidia-smi dmon -i 0 -s mu -d 5 -o TD > "$log_stem""-nvidia-smi.txt" &
+nvidia_job_id=$(pgrep nvidia-smi)
 
 # run python script
 echo "Run script"
 python $script
+
+# kill nvidia-smi process
+kill $nvidia_job_id
+echo "Done!"
