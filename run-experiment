@@ -133,11 +133,12 @@ if [ "${debug}" = true ]; then
 fi
 
 # path to python script
-script_path="experiments/""$method/$dataset/$name"
+# TODO better names for all variables
+script_home="experiments/""$method/$dataset/$name"
 script_name="$name-$dataset.py"
-script_full_path="$script_path/$script_name" 
+script_full_path="$script_home/$script_name" 
 if [ "${debug}" = true ]; then
-   echo "Script path: $script_full_path"
+   echo "Script relative path: $script_full_path"
 fi
 
 # check if python script exists
@@ -169,12 +170,25 @@ env="$PWD/""$env_path"
 if [ "${debug}" = true ]; then
    echo "Logs stem: $log_stem"
    echo "Log file: $log"
-   echo "Script path: $script_path"
+   echo "Script absolute path: $script_path"
    echo "Env path: $env"
 fi
 
+# check for particular parameters
+# sbatch time
+path_to_time="$PWD/$script_home/"
+if [ -f "$path_to_time/sbatch-time.txt" ]; then
+    stime=$(head -n 1 "$path_to_time/sbatch-time.txt")
+else
+    stime="08:00:00"
+fi
+
+if [ "${debug}" = true ]; then
+   echo "Time: $stime"
+fi
+
 # run main job
-sbatch --job-name=$name --output=$log $path_to_sbatch $name $env $script_path $log_stem
+sbatch --job-name=$name --time=$stime --output=$log $path_to_sbatch $name $env $script_path $log_stem
 
 # get job id, note that squeue truncates the job name to 8 characters
 job_id=$(squeue | grep ${name:0:8} | awk '{print $1}')

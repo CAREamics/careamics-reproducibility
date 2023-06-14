@@ -171,6 +171,6 @@ path_results = experiment / "results"
 if not path_results.exists():
     path_results.mkdir()
 
-for i, img in enumerate(pred):
+for i, img in enumerate(pred):  # note: test images have inhomogeneous XY
     name = f"prediction_tf_n2v_bsd68_gaussian25_{i}.npy"
     np.save(path_results / name, img)

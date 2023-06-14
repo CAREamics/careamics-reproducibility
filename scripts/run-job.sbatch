@@ -2,10 +2,9 @@
 #SBATCH --partition=gpuq
 #SBATCH --nodes=1
 #SBATCH --gres=gpu:1
-#SBATCH --mem=64GB
+#SBATCH --mem=128GB
 #SBATCH --ntasks=2
 #SBATCH --cpus-per-task=4 
-#SBATCH --time=08:00:00
 
 source $HOME/.bashrc
 
