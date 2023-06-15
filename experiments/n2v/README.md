@@ -17,7 +17,7 @@ can have different definition or default values:
     - CAREamics:
 - Number of masked pixels:
     - TF: Percentage of pixels in patch (default 0.198%)
-    - torch (PPN2V): Grid ??
+    - torch (PPN2VApp): Approximate number from a grid (default 312.5)
     - CAREamics:
 - N2V neighborhood:
     - TF:
@@ -27,6 +27,14 @@ can have different definition or default values:
     - TF: An epoch is a number of steps
     - torch (PPN2V): An epoch is a number of steps
     - CAREamics: An epoch is an iteration through all patches
+
+
+## Set-up
+
+- tf-n2v: Reproduce the [original notebook](https://github.com/juglab/n2v/blob/main/examples/2D/denoising2D_BSD68/BSD68_reproducibility.ipynb).
+- torch-ppn2v: Use the default number of pixels but use a number of steps per
+epoch to make the number of masked pixels seen during each epoch similar to
+tf-n2v.
 
 
 ## Results
