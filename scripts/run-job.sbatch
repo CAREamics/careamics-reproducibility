@@ -20,6 +20,11 @@ echo "Env: $env"
 echo "Script: $script"
 echo "Log stem: $log_stem"
 
+
+#####################################
+############## Conda ################
+#####################################
+
 # check if conda is installed
 if ! command -v conda &> /dev/null; then
    echo "Conda could not be found."
@@ -44,13 +49,32 @@ if [ $name = "tf-n2v" ]; then
    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CONDA_PREFIX/lib/
 fi
 
+#####################################
+############### GPU #################
+#####################################
+# log nvidia smi once
+nvidia-smi -i ${CUDA_VISIBLE_DEVICES} > "$log_stem""-nvidia-smi.txt"
+
 # start process to log GPU info
-nvidia-smi dmon -i 0 -s mu -d 5 -o TD > "$log_stem""-nvidia-smi.txt" &
+# -i: GPU index
+# -s: select metrics, (m) Frame Buffer and Bar1 memory usage and (u) utilization
+# -d: monitoring interval
+# -o: date format
+nvidia-smi dmon -i ${CUDA_VISIBLE_DEVICES} -s mu -d 5 -o TD > "$log_stem""-nvidia-dmon.txt" &
 nvidia_job_id=$(pgrep nvidia-smi)
+
+
+#####################################
+############# Training ##############
+#####################################
 
 # run python script
 echo "Run script"
 python $script
+
+#####################################
+############### End #################
+#####################################
 
 # kill nvidia-smi process
 kill $nvidia_job_id

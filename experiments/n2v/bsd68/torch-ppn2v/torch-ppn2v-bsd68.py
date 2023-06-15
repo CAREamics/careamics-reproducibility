@@ -75,9 +75,12 @@ configuration = {
     "unet_n_depth": 2,
     "unet_n_first": 96,
     "train_epochs": 100,
-    "train_steps_per_epoch": 10,
+    "train_steps_per_epoch": 400,
     "train_batch_size": 128,
     "train_learning_rate": 0.0004,
+    "numMaskedPixels": 7,
+    "patchSize": 64,
+    "valSize": 4,
 }
 print(f"Configuration: {configuration}")
 
@@ -107,9 +110,11 @@ trainHist, valHist = training.trainNetwork(
     stepsPerEpoch=configuration["train_steps_per_epoch"],
     batchSize=configuration["train_batch_size"],
     learningRate=configuration["train_learning_rate"],
-    augment=True,
-    patchSize=64,
+    numMaskedPixels=configuration["numMaskedPixels"],
+    patchSize=configuration["patchSize"],
+    valSize=configuration["valSize"],
     noiseModel=None,
+    augment=True,
 )
 
 
