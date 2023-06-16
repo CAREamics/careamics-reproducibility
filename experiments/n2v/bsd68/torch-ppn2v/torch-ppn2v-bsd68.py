@@ -78,7 +78,7 @@ configuration = {
     "train_steps_per_epoch": 400,
     "train_batch_size": 128,
     "train_learning_rate": 0.0004,
-    "numMaskedPixels": 7,
+    "numMaskedPixels": 9,
     "patchSize": 64,
     "valSize": 4,
 }
@@ -114,7 +114,7 @@ trainHist, valHist = training.trainNetwork(
     patchSize=configuration["patchSize"],
     valSize=configuration["valSize"],
     noiseModel=None,
-    augment=True,
+    augment=False,
 )
 
 
