@@ -54,7 +54,7 @@ validate_dataset() {
 
 # Inspect arguments and echo the usage if necessary
 # TODO h shouldn't take arguments
-while getopts ':h:l:m:d:r' option; do
+while getopts ':hl:m:d:r' option; do
    case "$option" in
       h) 
          usage;;
@@ -75,10 +75,12 @@ while getopts ':h:l:m:d:r' option; do
          ;;
       \?) 
          echo "Unknown option: -$OPTARG" >&2; 
-         exit 1;;
+         usage
+         ;;
       :) 
-         echo "Missing option argument for -$OPTARG" >&2; 
-         exit 1;;
+         echo "Missing argument for -$OPTARG" >&2; 
+         usage
+         ;;
       *) 
          usage
          ;;
@@ -88,8 +90,19 @@ done
 # check that all mandatory options are there
 shift $((OPTIND-1))
 
-if [ -z "${library}" ] || [ -z "${method}" ] || [ -z "${dataset}" ]; then
-   echo "Missing argument." 
+if [ -z "${library}" ]; then
+   echo "Missing library flag." 
+   usage
+fi
+
+if [ -z "${method}" ]; then
+   echo "Missing method flag." 
+   usage
+fi
+
+
+if [ -z "${dataset}" ]; then
+   echo "Missing dataset flag." 
    usage
 fi
 
