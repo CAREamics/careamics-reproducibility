@@ -8,7 +8,7 @@
 import os
 from pathlib import Path
 
-from microscopy_portfolio import Portfolio
+from careamics_portfolio import PortfolioManager
 import numpy as np
 import torch
 
@@ -41,7 +41,7 @@ if not data_path.exists():
     data_path.mkdir()
 print(f"Path to data: {data_path}")
 
-portfolio = Portfolio()
+portfolio = PortfolioManager()
 paths = portfolio.denoising.N2V_BSD68.download(data_path)
 print(f"Files downloaded to: {paths}")
 

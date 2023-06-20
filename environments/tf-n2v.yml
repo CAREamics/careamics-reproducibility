@@ -10,4 +10,4 @@ dependencies:
   - pip:
       - tensorflow==2.10.*
       - n2v==0.3.2
-      - microscopy-portfolio
+      - careamics-portfolio
