@@ -16,6 +16,8 @@ from ppn2v.unet import UNet
 from ppn2v.pn2v import utils, training, prediction
 
 
+# TODO use the paths given by the portfolio manager
+
 # See if we can use a GPU
 device = utils.getDevice()
 print(f"Device {device} found.")
@@ -48,14 +50,14 @@ print(f"Files downloaded to: {paths}")
 # Load training data
 X_train = np.load(
     data_path
-    / "BSD68_reproducibility"
+    / "denoising-N2V_BSD68.unzip"
     / "BSD68_reproducibility_data"
     / "train"
     / "DCNN400_train_gaussian25.npy"
 )
 X_val = np.load(
     data_path
-    / "BSD68_reproducibility"
+    / "denoising-N2V_BSD68.unzip"
     / "BSD68_reproducibility_data"
     / "val"
     / "DCNN400_validation_gaussian25.npy"
@@ -130,7 +132,7 @@ def PSNR(gt, img):
 # Load ground test ground truth
 groundtruth_data = np.load(
     data_path
-    / "BSD68_reproducibility"
+    / "denoising-N2V_BSD68.unzip"
     / "BSD68_reproducibility_data"
     / "test"
     / "bsd68_groundtruth.npy",
@@ -138,7 +140,7 @@ groundtruth_data = np.load(
 )
 test_data = np.load(
     data_path
-    / "BSD68_reproducibility"
+    / "denoising-N2V_BSD68.unzip"
     / "BSD68_reproducibility_data"
     / "test"
     / "bsd68_gaussian25.npy",

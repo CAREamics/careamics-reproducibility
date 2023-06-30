@@ -21,6 +21,6 @@ output_sacct="$log_stem""-sacct.txt"
 seff $job_id > $output_seff
 
 # output sacct to file
-sacct --format JobID,JobName,Partition,AveRSS,MaxRSS,ReqMem,State,AllocCPUS -j $job_id > $output_sacct
+sacct -l -j $job_id > $output_sacct
 #export MODULEPATH=/share/apps/spack/testing/modules-files/linux-centos8-skylake_avx512/:$MODULEPATH
 #module load python-3.9.10/py-reportseff/2.7.2 
