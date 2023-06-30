@@ -2,7 +2,7 @@
 #SBATCH --partition=gpuq
 #SBATCH --nodes=1
 #SBATCH --gres=gpu:1
-#SBATCH --mem=1GB
+#SBATCH --mem=12GB
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=2
 
