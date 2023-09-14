@@ -11,3 +11,4 @@ dependencies:
   - pip
   - pip:
       - careamics-portfolio
+      - git+https://github.com/CAREamics/careamics-restoration.git
