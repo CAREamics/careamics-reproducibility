@@ -13,6 +13,7 @@ from careamics_portfolio import PortfolioManager
 
 from careamics_restoration.engine import Engine
 from careamics_restoration.metrics import psnr
+from careamics_restoration.config import Configuration
 
 #### Import Dataset Portfolio
 # Explore portfolio
@@ -39,8 +40,49 @@ gt_path.mkdir(parents=True, exist_ok=True)
 train_image = tifffile.imread(next(iter(train_path.rglob("*.tiff"))))[0]
 val_image = tifffile.imread(next(iter(val_path.rglob("*.tiff"))))[0]
 
+#### configuration
+config_dict = {
+    "experiment_name": "n2v_BSD",
+    "working_dir": "n2v_bsd",
+    "algorithm": {
+        "loss": "n2v",
+        "model": "UNet",
+        "is_3D": False,
+        "model_parameters": {
+            "num_channels_init": 32,
+        },
+    },
+    "training": {
+        "num_epochs": 50,
+        "patch_size": [64, 64],
+        "batch_size": 128,
+        "optimizer": {
+            "name": "Adam",
+            "learning_rate": 0.0004,
+        },
+        "lr_scheduler": {
+            "name": "ReduceLROnPlateau",
+            "parameters": {
+                "factor": 0.5,
+            },
+        },
+        "extraction_strategy": "random",
+        "augmentation": True,
+        "use_wandb": False,
+        "num_workers": 4,
+        "amp": {
+            "use": False,
+        },
+    },
+    "data": {
+        "data_format": "tiff",
+        "axes": "SYX",
+    },
+}
+config = Configuration(**config_dict)
+
 #### Initialize the Engine
-engine = Engine(config_path="n2v_2D_BSD.yml")
+engine = Engine(config=config)
 pprint.PrettyPrinter(indent=2).pprint(engine.cfg.model_dump(exclude_optionals=False))
 
 #### Run training
