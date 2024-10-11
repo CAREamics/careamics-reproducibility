@@ -11,3 +11,4 @@ dependencies:
       - tensorflow==2.10.*
       - n2v==0.3.2
       - careamics-portfolio
+      - numpy==1.26.4
