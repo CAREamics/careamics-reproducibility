@@ -4,9 +4,12 @@ stages:
 sync:
   stage: sync
   script:
-    - git remote
-    - git remote add https://github.com/CAREamics/careamics-reproducibility.git
-    - git remote
+    - git config --global user.email "6367888+jdeschamps@users.noreply.github.com"
+    - git config --global user.name "Joran Deschamps"
+    - git remote add github https://github.com/CAREamics/careamics-reproducibility.git
+    - git fetch github
+    - git checkout main
+    - git pull github main
+    - git push origin main
   only:
     - schedules
-
