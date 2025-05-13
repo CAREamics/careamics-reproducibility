@@ -3,6 +3,7 @@ stages:
 
 sync:
   stage: sync
+  image: ubuntu:latest
   script:
     - git --version
   only:
