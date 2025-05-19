@@ -1,27 +1,29 @@
 #!/usr/bin/env python
 # coding: utf-8
-
-# CAREamics - 2D Example for BSD68 Data
-# --------------------------------------
-import pprint
+# CAREamics - 2D Example for BSD68 Data 
+# ------------------------------------------------------
+import os
 from pathlib import Path
-
 import numpy as np
-
 import tifffile
+from careamics import CAREamist
+from careamics.config import create_n2v_configuration
+from careamics.utils.metrics import scale_invariant_psnr
 from careamics_portfolio import PortfolioManager
 
-from careamics_restoration.engine import Engine
-from careamics_restoration.metrics import psnr
-from careamics_restoration.config import Configuration
+# Create directories
+root_path = Path("data")
+root_path.mkdir(exist_ok=True)
 
-#### Import Dataset Portfolio
+# Results directory
+results_dir = Path("results")
+results_dir.mkdir(exist_ok=True)
+
 # Explore portfolio
+print("Loading BSD68 dataset...")
 portfolio = PortfolioManager()
-print(portfolio.denoising)
 
 # Download and unzip the files
-root_path = Path("data")
 files = portfolio.denoising.N2V_BSD68.download(root_path)
 print(f"List of downloaded files: {files}")
 
@@ -31,82 +33,106 @@ val_path = data_path / "val"
 test_path = data_path / "test" / "images"
 gt_path = data_path / "test" / "gt"
 
-train_path.mkdir(parents=True, exist_ok=True)
-val_path.mkdir(parents=True, exist_ok=True)
-test_path.mkdir(parents=True, exist_ok=True)
-gt_path.mkdir(parents=True, exist_ok=True)
+# Load training image for N2V
+train_files = list(train_path.glob("*.tiff"))
+if len(train_files) == 0:
+    raise FileNotFoundError(f"No training files found in {train_path}")
 
-#### training and validation data
-train_image = tifffile.imread(next(iter(train_path.rglob("*.tiff"))))[0]
-val_image = tifffile.imread(next(iter(val_path.rglob("*.tiff"))))[0]
+print(f"Loading training file: {train_files[0]}")
+train_image = tifffile.imread(train_files[0])[0]
+print(f"Training image shape: {train_image.shape}")
 
-#### configuration
-config_dict = {
-    "experiment_name": "n2v_BSD",
-    "working_dir": "n2v_bsd",
-    "algorithm": {
-        "loss": "n2v",
-        "model": "UNet",
-        "is_3D": False,
-        "model_parameters": {
-            "num_channels_init": 32,
-        },
-    },
-    "training": {
-        "num_epochs": 50,
-        "patch_size": [64, 64],
-        "batch_size": 128,
-        "optimizer": {
-            "name": "Adam",
-            "learning_rate": 0.0004,
-        },
-        "lr_scheduler": {
-            "name": "ReduceLROnPlateau",
-            "parameters": {
-                "factor": 0.5,
-            },
-        },
-        "extraction_strategy": "random",
-        "augmentation": True,
-        "use_wandb": False,
-        "num_workers": 4,
-        "amp": {
-            "use": False,
-        },
-    },
-    "data": {
-        "data_format": "tiff",
-        "axes": "SYX",
-    },
-}
-config = Configuration(**config_dict)
-
-#### Initialize the Engine
-engine = Engine(config=config)
-pprint.PrettyPrinter(indent=2).pprint(engine.cfg.model_dump(exclude_optionals=False))
-
-#### Run training
-train_stats, val_stats = engine.train(train_path=train_path, val_path=val_path)
-
-
-#############################################
-#############   Prediction   ################
-#############################################
-def PSNR(gt, img):
-    """PSNR calculation between ground truth and noisy image"""
-    mse = np.mean(np.square(gt - img))
-    return 20 * np.log10(255) - 10 * np.log10(mse)
-
-
-preds = engine.predict(
-    input=test_path, tile_shape=[64, 64], overlaps=[48, 48], axes="YX"
+# Configure Noise2Void model
+print("Configuring Noise2Void model...")
+config = create_n2v_configuration(
+    experiment_name="n2v_BSD",
+    data_type="array",
+    axes="YX",
+    patch_size=(64, 64),
+    batch_size=128,
+    num_epochs=50,
+    masked_pixel_percentage=0.2,
+    struct_n2v_axis="none",
+    model_checkpoint={"save_top_k": 3, "monitor": "val_loss"},
 )
 
-# Create a list of ground truth images
-gts = [tifffile.imread(f) for f in sorted(gt_path.glob("*.tiff"))]
+# Update the model parameters to match original script
+config["algorithm_config"]["model"]["num_channels_init"] = 32
+config["algorithm_config"]["optimizer"]["parameters"]["lr"] = 0.0004
+config["algorithm_config"]["lr_scheduler"]["parameters"]["factor"] = 0.5
 
-psnr_total = 0
-for pred, gt in zip(preds, gts):
-    psnr_total += psnr(gt, pred)
+# Initialize and train model
+print("Initializing and training model...")
+working_dir = os.path.join(results_dir, "checkpoints")
+os.makedirs(working_dir, exist_ok=True)
 
-print(f"PSNR total: {psnr_total / len(preds)}")
+careamist = CAREamist(
+    source=config,
+    working_dir=working_dir
+)
+
+careamist.train(
+    train_source=train_image,
+    val_percentage=0.1,
+)
+
+# Prediction and evaluation
+print("Making predictions and evaluating results...")
+test_files = sorted(test_path.glob("*.tiff"))
+gt_files = sorted(gt_path.glob("*.tiff"))
+
+if len(test_files) == 0 or len(gt_files) == 0:
+    raise FileNotFoundError(f"No test or ground truth files found")
+
+print(f"Found {len(test_files)} test images and {len(gt_files)} ground truth images")
+
+# Create predictions
+psnr_noisy_values = []
+psnr_denoised_values = []
+
+for i, (test_file, gt_file) in enumerate(zip(test_files, gt_files)):
+    print(f"Processing image {i+1}/{len(test_files)}: {test_file.name}")
+    
+    # Load test and ground truth images
+    test_img = tifffile.imread(test_file)
+    gt_img = tifffile.imread(gt_file)
+    
+    # Make prediction
+    prediction = careamist.predict(
+        source=test_img,
+        tile_size=(64, 64),
+        tile_overlap=(48, 48)
+    )
+    
+    # Get prediction image
+    pred_img = prediction[0].squeeze()
+    
+    # Calculate PSNR
+    psnr_noisy = scale_invariant_psnr(gt_img, test_img)
+    psnr_denoised = scale_invariant_psnr(gt_img, pred_img)
+    
+    psnr_noisy_values.append(psnr_noisy)
+    psnr_denoised_values.append(psnr_denoised)
+    
+    # Save prediction
+    output_file = results_dir / f"pred_{test_file.name}"
+    tifffile.imwrite(str(output_file), pred_img.astype(np.float32))
+    
+    print(f" PSNR noisy: {psnr_noisy:.2f}, PSNR denoised: {psnr_denoised:.2f}")
+
+# Calculate average PSNR
+avg_psnr_noisy = np.mean(psnr_noisy_values)
+avg_psnr_denoised = np.mean(psnr_denoised_values)
+
+# Save metrics 
+with open(str(results_dir / "metrics.txt"), "w") as f:
+    f.write(f"Average PSNR of noisy input: {avg_psnr_noisy:.2f}\n")
+    f.write(f"Average PSNR of N2V denoised: {avg_psnr_denoised:.2f}\n")
+    f.write("\nIndividual PSNR values:\n")
+    for i, (noisy, denoised) in enumerate(zip(psnr_noisy_values, psnr_denoised_values)):
+        f.write(f"Image {i+1}: Noisy {noisy:.2f}, Denoised {denoised:.2f}\n")
+
+print("\nSummary:")
+print(f"Average PSNR of noisy input: {avg_psnr_noisy:.2f}")
+print(f"Average PSNR of N2V denoised: {avg_psnr_denoised:.2f}")
+print(f"PSNR improvement: {avg_psnr_denoised - avg_psnr_noisy:.2f}")
