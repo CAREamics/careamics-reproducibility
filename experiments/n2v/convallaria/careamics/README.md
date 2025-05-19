@@ -10,8 +10,11 @@ conda create -n careamics python=3.9
 conda activate careamics
 conda install pytorch torchvision pytorch-cuda=11.8 -c pytorch -c nvidia
 pip install careamics
+```
 
 ## Configuration
+
+```python
 config = create_n2v_configuration(
     experiment_name="convallaria_n2v",
     data_type="array",
@@ -22,3 +25,7 @@ config = create_n2v_configuration(
     masked_pixel_percentage=0.2,
     struct_n2v_axis="none",
 )
+```
+
+## Results 
+todo
