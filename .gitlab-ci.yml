@@ -21,4 +21,4 @@ sync:
     - git pull github main
 
     # Push to GitLab
-    - git push "https://gitlab-ci-token:${GITLAB_TOKEN}@gitlab.fht.org/CAREamics/careamics-reproducibility.git
+    - git push "https://gitlab-ci-token:${GITLAB_TOKEN}@gitlab.fht.org/CAREamics/careamics-reproducibility.git"
