@@ -38,3 +38,5 @@ sync:
     - if: '$CI_PIPELINE_SOURCE == "schedule"'
       when: always
     - when: never # Ensures job doesn't run on push/merge/PR
+  tags:
+    - general-runner
