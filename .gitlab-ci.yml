@@ -24,7 +24,7 @@ sync:
     - git remote add gitlab "https://gitlab-ci-token:${GITLAB_TOKEN}@gitlab.fht.org/CAREamics/careamics-reproducibility.git"
 
     # Pull from Github
-    - git pull github
+    - git pull github main
 
     # Push to GitLab
-    - git push gitlab
+    - git push gitlab main
