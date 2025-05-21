@@ -1,3 +1,9 @@
+# ============================================================
+# Sync GitHub Public Repo -> Private GitLab Repo
+# This pipeline pulls from GitHub and pushes to GitLab private
+# repository in order to maintain synchronization between the
+# two repositories.
+# ============================================================
 stages:
   - sync
 
