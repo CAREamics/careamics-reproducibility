@@ -1,9 +1,8 @@
 stages:
   - sync
 
-# variables:
-# BUILD: MYCUSTOMBUILD
-# GIT_STRATEGY: none # prevent GitLab from doing an initial git clone
+variables:
+  TOKEN: GITLAB_TOKEN
 
 sync:
   stage: sync
@@ -21,7 +20,7 @@ sync:
     - git remote add github https://github.com/CAREamics/careamics-reproducibility.git
 
     # Add Gitlab remote
-    - git remote add gitlab "https://gitlab-ci-token:${GITLAB_TOKEN}@gitlab.fht.org/CAREamics/careamics-reproducibility.git"
+    - git remote add gitlab "https://gitlab-ci-token:${TOKEN}@gitlab.fht.org/CAREamics/careamics-reproducibility.git"
 
     # Pull from Github
     - git pull github main
