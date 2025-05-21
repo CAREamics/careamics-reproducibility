@@ -20,9 +20,11 @@ sync:
     # Add Github remote
     - git remote add github https://github.com/CAREamics/careamics-reproducibility.git
 
+    # Add Gitlab remote
+    - git remote add gitlab "https://gitlab-ci-token:${GITLAB_TOKEN}@gitlab.fht.org/CAREamics/careamics-reproducibility.git"
+
     # Pull from Github
-    - git pull github main
+    - git pull github
 
     # Push to GitLab
-    - git push origin main
-    # - git push "https://gitlab-ci-token:${GITLAB_TOKEN}@gitlab.fht.org/CAREamics/careamics-reproducibility.git"
+    - git push gitlab
