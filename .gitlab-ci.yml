@@ -14,6 +14,9 @@ sync:
     # Install necessary tools
     - apk add --no-cache git openssh
 
+    # Checkout main
+    - git checkout main
+
     # Add Github remote
     - git remote add github https://github.com/CAREamics/careamics-reproducibility.git
 
@@ -21,4 +24,5 @@ sync:
     - git pull github main
 
     # Push to GitLab
-    - git push "https://gitlab-ci-token:${GITLAB_TOKEN}@gitlab.fht.org/CAREamics/careamics-reproducibility.git"
+    - git push origin main
+    # - git push "https://gitlab-ci-token:${GITLAB_TOKEN}@gitlab.fht.org/CAREamics/careamics-reproducibility.git"
