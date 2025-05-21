@@ -13,16 +13,12 @@ sync:
   script:
     # Install necessary tools
     - apk add --no-cache git openssh
-    - git remote show origin
 
-    # Clone public GitHub repo (read-only)
-    # - git clone --mirror https://github.com/your-org/your-repo.git github-upstream
+    # Add Github remote
+    - git remote add github https://github.com/CAREamics/careamics-reproducibility.git
 
-    # # Setup Git identity
-    # - git config --global user.name "CI Sync Bot"
-    # - git config --global user.email "ci-sync@example.com"
+    # Pull from Github
+    - git pull github main
 
-    # # Push to GitLab using personal access token or CI job token
-    # - cd github-upstream
-    # - git remote set-url --push origin "https://oauth2:${GITLAB_TOKEN}@gitlab.com/your-group/your-private-repo.git"
-    # - git push --mirror
+    # Push to GitLab
+    - git push "https://gitlab-ci-token:${GITLAB_TOKEN}@gitlab.fht.org/CAREamics/careamics-reproducibility.git
