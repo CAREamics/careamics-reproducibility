@@ -1,17 +1,16 @@
 # N2V CAREamics - BSD68
 This script demonstrates Noise2Void (N2V) denoising on the BSD68 dataset using the CAREamics API.
-
 - [Original repository](https://github.com/CAREamics/careamics)
 
 ## Environment
 ```bash
-conda create -n careamics python=3.9
+conda create -n careamics python=3.11
 conda activate careamics
-conda install pytorch torchvision pytorch-cuda=11.8 -c pytorch -c nvidia
+conda install pytorch torchvision pytorch-cuda=12.8 -c pytorch -c nvidia
 pip install careamics careamics-portfolio
+```
 
 ## Configuration
-
 ```python
 config = create_n2v_configuration(
     experiment_name="n2v_BSD",
@@ -22,19 +21,21 @@ config = create_n2v_configuration(
     num_epochs=50,
     masked_pixel_percentage=0.2,
     struct_n2v_axis="none",
+    model_params={
+        "num_channels_init": 32
+    },
+    optimizer_params={
+        "lr": 0.0004
+    },
+    lr_scheduler_params={
+        "factor": 0.5
+    }
 )
-
-# Updated parameters from original script
-config["algorithm_config"]["model"]["num_channels_init"] = 32
-config["algorithm_config"]["optimizer"]["parameters"]["lr"] = 0.0004
-config["algorithm_config"]["lr_scheduler"]["parameters"]["factor"] = 0.5
 ```
 
 ## Results
-
 From paper:
 TODO
 
 From script:
 TODO
-

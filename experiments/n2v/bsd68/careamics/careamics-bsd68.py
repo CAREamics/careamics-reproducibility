@@ -1,29 +1,25 @@
 #!/usr/bin/env python
 # coding: utf-8
-# CAREamics - 2D Example for BSD68 Data 
-# ------------------------------------------------------
-import os
+
+# CAREamics - 2D Example for BSD68 Data
+# --------------------------------------
+import pprint
 from pathlib import Path
 import numpy as np
 import tifffile
+from careamics_portfolio import PortfolioManager
 from careamics import CAREamist
 from careamics.config import create_n2v_configuration
 from careamics.utils.metrics import scale_invariant_psnr
-from careamics_portfolio import PortfolioManager
+from microssim import micro_structural_similarity
 
-# Create directories
-root_path = Path("data")
-root_path.mkdir(exist_ok=True)
-
-# Results directory
-results_dir = Path("results")
-results_dir.mkdir(exist_ok=True)
-
+#### Import Dataset Portfolio
 # Explore portfolio
-print("Loading BSD68 dataset...")
 portfolio = PortfolioManager()
+print(portfolio.denoising)
 
 # Download and unzip the files
+root_path = Path("data")
 files = portfolio.denoising.N2V_BSD68.download(root_path)
 print(f"List of downloaded files: {files}")
 
@@ -33,106 +29,70 @@ val_path = data_path / "val"
 test_path = data_path / "test" / "images"
 gt_path = data_path / "test" / "gt"
 
-# Load training image for N2V
-train_files = list(train_path.glob("*.tiff"))
-if len(train_files) == 0:
-    raise FileNotFoundError(f"No training files found in {train_path}")
+train_path.mkdir(parents=True, exist_ok=True)
+val_path.mkdir(parents=True, exist_ok=True)
+test_path.mkdir(parents=True, exist_ok=True)
+gt_path.mkdir(parents=True, exist_ok=True)
 
-print(f"Loading training file: {train_files[0]}")
-train_image = tifffile.imread(train_files[0])[0]
-print(f"Training image shape: {train_image.shape}")
+#### training and validation data
+train_image = tifffile.imread(next(iter(train_path.rglob("*.tiff"))))[0]
+val_image = tifffile.imread(next(iter(val_path.rglob("*.tiff"))))[0]
 
-# Configure Noise2Void model
-print("Configuring Noise2Void model...")
+#### configuration
 config = create_n2v_configuration(
     experiment_name="n2v_BSD",
     data_type="array",
-    axes="YX",
+    axes="SYX",
     patch_size=(64, 64),
     batch_size=128,
     num_epochs=50,
     masked_pixel_percentage=0.2,
     struct_n2v_axis="none",
-    model_checkpoint={"save_top_k": 3, "monitor": "val_loss"},
+    model_params={
+        "num_channels_init": 32
+    },
+    optimizer_params={
+        "lr": 0.0004
+    },
+    lr_scheduler_params={
+        "factor": 0.5
+    }
 )
 
-# Update the model parameters to match original script
-config["algorithm_config"]["model"]["num_channels_init"] = 32
-config["algorithm_config"]["optimizer"]["parameters"]["lr"] = 0.0004
-config["algorithm_config"]["lr_scheduler"]["parameters"]["factor"] = 0.5
+#### Initialize CAREamist
+careamist = CAREamist(source=config)
+pprint.PrettyPrinter(indent=2).pprint(config)
 
-# Initialize and train model
-print("Initializing and training model...")
-working_dir = os.path.join(results_dir, "checkpoints")
-os.makedirs(working_dir, exist_ok=True)
-
-careamist = CAREamist(
-    source=config,
-    working_dir=working_dir
-)
-
+#### Run training
 careamist.train(
-    train_source=train_image,
-    val_percentage=0.1,
+    train_source=train_path,
+    val_source=val_path
 )
 
-# Prediction and evaluation
-print("Making predictions and evaluating results...")
-test_files = sorted(test_path.glob("*.tiff"))
-gt_files = sorted(gt_path.glob("*.tiff"))
+#############################################
+#############   Prediction   ################
+#############################################
 
-if len(test_files) == 0 or len(gt_files) == 0:
-    raise FileNotFoundError(f"No test or ground truth files found")
+# Load test images and ground truth
+test_images = [tifffile.imread(f) for f in sorted(test_path.glob("*.tiff"))]
+gt_images = [tifffile.imread(f) for f in sorted(gt_path.glob("*.tiff"))]
 
-print(f"Found {len(test_files)} test images and {len(gt_files)} ground truth images")
-
-# Create predictions
-psnr_noisy_values = []
-psnr_denoised_values = []
-
-for i, (test_file, gt_file) in enumerate(zip(test_files, gt_files)):
-    print(f"Processing image {i+1}/{len(test_files)}: {test_file.name}")
-    
-    # Load test and ground truth images
-    test_img = tifffile.imread(test_file)
-    gt_img = tifffile.imread(gt_file)
-    
-    # Make prediction
-    prediction = careamist.predict(
+# Predict on test images
+predictions = []
+for test_img in test_images:
+    pred = careamist.predict(
         source=test_img,
         tile_size=(64, 64),
         tile_overlap=(48, 48)
     )
-    
-    # Get prediction image
-    pred_img = prediction[0].squeeze()
-    
-    # Calculate PSNR
-    psnr_noisy = scale_invariant_psnr(gt_img, test_img)
-    psnr_denoised = scale_invariant_psnr(gt_img, pred_img)
-    
-    psnr_noisy_values.append(psnr_noisy)
-    psnr_denoised_values.append(psnr_denoised)
-    
-    # Save prediction
-    output_file = results_dir / f"pred_{test_file.name}"
-    tifffile.imwrite(str(output_file), pred_img.astype(np.float32))
-    
-    print(f" PSNR noisy: {psnr_noisy:.2f}, PSNR denoised: {psnr_denoised:.2f}")
+    predictions.append(pred[0].squeeze())
 
-# Calculate average PSNR
-avg_psnr_noisy = np.mean(psnr_noisy_values)
-avg_psnr_denoised = np.mean(psnr_denoised_values)
+# Calculate metrics
+psnr_total = 0
+microssim_total = 0
+for pred, gt in zip(predictions, gt_images):
+    psnr_total += scale_invariant_psnr(gt, pred)
+    microssim_total += micro_structural_similarity(pred, gt)
 
-# Save metrics 
-with open(str(results_dir / "metrics.txt"), "w") as f:
-    f.write(f"Average PSNR of noisy input: {avg_psnr_noisy:.2f}\n")
-    f.write(f"Average PSNR of N2V denoised: {avg_psnr_denoised:.2f}\n")
-    f.write("\nIndividual PSNR values:\n")
-    for i, (noisy, denoised) in enumerate(zip(psnr_noisy_values, psnr_denoised_values)):
-        f.write(f"Image {i+1}: Noisy {noisy:.2f}, Denoised {denoised:.2f}\n")
-
-print("\nSummary:")
-print(f"Average PSNR of noisy input: {avg_psnr_noisy:.2f}")
-print(f"Average PSNR of N2V denoised: {avg_psnr_denoised:.2f}")
-print(f"PSNR improvement: {avg_psnr_denoised - avg_psnr_noisy:.2f}")
+print(f"Average PSNR: {psnr_total / len(predictions):.2f}")
+print(f"Average MicroSSIM: {microssim_total / len(predictions):.3f}")
