@@ -9,8 +9,8 @@
 #SBATCH --gres=gpu:1
 
 # Load necessary modules
-module load python/3.9
-module load cuda/11.8
+module load python/3.11
+module load cuda/12.8
 
 # Activate environment and run script
 source /path/to/your/venv/bin/activate
