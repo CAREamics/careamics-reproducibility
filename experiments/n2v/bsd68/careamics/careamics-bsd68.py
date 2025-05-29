@@ -3,7 +3,6 @@
 
 # CAREamics - 2D Example for BSD68 Data
 # --------------------------------------
-import pprint
 from pathlib import Path
 import numpy as np
 import tifffile
@@ -48,20 +47,10 @@ config = create_n2v_configuration(
     num_epochs=50,
     masked_pixel_percentage=0.2,
     struct_n2v_axis="none",
-    model_params={
-        "num_channels_init": 32
-    },
-    optimizer_params={
-        "lr": 0.0004
-    },
-    lr_scheduler_params={
-        "factor": 0.5
-    }
 )
 
 #### Initialize CAREamist
 careamist = CAREamist(source=config)
-pprint.PrettyPrinter(indent=2).pprint(config)
 
 #### Run training
 careamist.train(
@@ -82,7 +71,7 @@ predictions = []
 for test_img in test_images:
     pred = careamist.predict(
         source=test_img,
-        tile_size=(64, 64),
+        tile_size=(128, 128),
         tile_overlap=(48, 48)
     )
     predictions.append(pred[0].squeeze())
@@ -95,4 +84,4 @@ for pred, gt in zip(predictions, gt_images):
     microssim_total += micro_structural_similarity(pred, gt)
 
 print(f"Average PSNR: {psnr_total / len(predictions):.2f}")
-print(f"Average MicroSSIM: {microssim_total / len(predictions):.3f}")
+print(f"Average MicroSSIM: {microssim_total / len(predictions):.2f}")
