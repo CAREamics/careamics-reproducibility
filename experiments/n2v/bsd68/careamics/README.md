@@ -21,15 +21,6 @@ config = create_n2v_configuration(
     num_epochs=50,
     masked_pixel_percentage=0.2,
     struct_n2v_axis="none",
-    model_params={
-        "num_channels_init": 32
-    },
-    optimizer_params={
-        "lr": 0.0004
-    },
-    lr_scheduler_params={
-        "factor": 0.5
-    }
 )
 ```
 
