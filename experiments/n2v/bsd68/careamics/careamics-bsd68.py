@@ -3,17 +3,14 @@
 
 # CAREamics - 2D Example for BSD68 Data
 # --------------------------------------
-import pprint
 from pathlib import Path
-
 import numpy as np
-
 import tifffile
 from careamics_portfolio import PortfolioManager
-
-from careamics_restoration.engine import Engine
-from careamics_restoration.metrics import psnr
-from careamics_restoration.config import Configuration
+from careamics import CAREamist
+from careamics.config import create_n2v_configuration
+from careamics.utils.metrics import scale_invariant_psnr
+from microssim import micro_structural_similarity
 
 #### Import Dataset Portfolio
 # Explore portfolio
@@ -41,72 +38,50 @@ train_image = tifffile.imread(next(iter(train_path.rglob("*.tiff"))))[0]
 val_image = tifffile.imread(next(iter(val_path.rglob("*.tiff"))))[0]
 
 #### configuration
-config_dict = {
-    "experiment_name": "n2v_BSD",
-    "working_dir": "n2v_bsd",
-    "algorithm": {
-        "loss": "n2v",
-        "model": "UNet",
-        "is_3D": False,
-        "model_parameters": {
-            "num_channels_init": 32,
-        },
-    },
-    "training": {
-        "num_epochs": 50,
-        "patch_size": [64, 64],
-        "batch_size": 128,
-        "optimizer": {
-            "name": "Adam",
-            "learning_rate": 0.0004,
-        },
-        "lr_scheduler": {
-            "name": "ReduceLROnPlateau",
-            "parameters": {
-                "factor": 0.5,
-            },
-        },
-        "extraction_strategy": "random",
-        "augmentation": True,
-        "use_wandb": False,
-        "num_workers": 4,
-        "amp": {
-            "use": False,
-        },
-    },
-    "data": {
-        "data_format": "tiff",
-        "axes": "SYX",
-    },
-}
-config = Configuration(**config_dict)
+config = create_n2v_configuration(
+    experiment_name="n2v_BSD",
+    data_type="array",
+    axes="SYX",
+    patch_size=(64, 64),
+    batch_size=128,
+    num_epochs=50,
+    masked_pixel_percentage=0.2,
+    struct_n2v_axis="none",
+)
 
-#### Initialize the Engine
-engine = Engine(config=config)
-pprint.PrettyPrinter(indent=2).pprint(engine.cfg.model_dump(exclude_optionals=False))
+#### Initialize CAREamist
+careamist = CAREamist(source=config)
 
 #### Run training
-train_stats, val_stats = engine.train(train_path=train_path, val_path=val_path)
-
+careamist.train(
+    train_source=train_path,
+    val_source=val_path
+)
 
 #############################################
 #############   Prediction   ################
 #############################################
-def PSNR(gt, img):
-    """PSNR calculation between ground truth and noisy image"""
-    mse = np.mean(np.square(gt - img))
-    return 20 * np.log10(255) - 10 * np.log10(mse)
 
+# Load test images and ground truth
+test_images = [tifffile.imread(f) for f in sorted(test_path.glob("*.tiff"))]
+gt_images = [tifffile.imread(f) for f in sorted(gt_path.glob("*.tiff"))]
 
-preds = engine.predict(
-    input=test_path, tile_shape=[64, 64], overlaps=[48, 48], axes="YX"
-)
+# Predict on test images
+predictions = []
+for test_img in test_images:
+    pred = careamist.predict(
+        source=test_img,
+        tile_size=(128, 128),
+        tile_overlap=(48, 48)
+    )
+    predictions.append(pred[0].squeeze())
 
-# Create a list of ground truth images
-gts = [tifffile.imread(f) for f in sorted(gt_path.glob("*.tiff"))]
-
+# Calculate metrics
 psnr_total = 0
-for pred, gt in zip(preds, gts):
-    psnr_total += psnr(gt, pred)
+microssim_total = 0
+for pred, gt in zip(predictions, gt_images):
+    psnr_total += scale_invariant_psnr(gt, pred)
+    microssim_total += micro_structural_similarity(pred, gt)
 
-print(f"PSNR total: {psnr_total / len(preds)}")
+print(f"Average PSNR: {psnr_total / len(predictions):.2f}")
+print(f"Average MicroSSIM: {microssim_total / len(predictions):.2f}")
