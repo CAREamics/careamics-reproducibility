@@ -14,8 +14,8 @@ pip install careamics careamics-portfolio
 ```python
 config = create_n2v_configuration(
     experiment_name="n2v_BSD",
-    data_type="array",
-    axes="YX",
+    data_type="tiff",
+    axes="SYX",
     patch_size=(64, 64),
     batch_size=128,
     num_epochs=50,
