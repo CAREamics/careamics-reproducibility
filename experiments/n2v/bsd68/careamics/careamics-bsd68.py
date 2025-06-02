@@ -13,7 +13,6 @@ from careamics.utils.metrics import scale_invariant_psnr
 from microssim import micro_structural_similarity
 
 #### Import Dataset Portfolio
-# Explore portfolio
 portfolio = PortfolioManager()
 print(portfolio.denoising)
 
@@ -40,7 +39,7 @@ val_image = tifffile.imread(next(iter(val_path.rglob("*.tiff"))))[0]
 #### configuration
 config = create_n2v_configuration(
     experiment_name="n2v_BSD",
-    data_type="array",
+    data_type="tiff",
     axes="SYX",
     patch_size=(64, 64),
     batch_size=128,
@@ -63,18 +62,27 @@ careamist.train(
 #############################################
 
 # Load test images and ground truth
-test_images = [tifffile.imread(f) for f in sorted(test_path.glob("*.tiff"))]
-gt_images = [tifffile.imread(f) for f in sorted(gt_path.glob("*.tiff"))]
+test_files = sorted(test_path.glob("*.tiff"))
+gt_files = sorted(gt_path.glob("*.tiff"))
 
-# Predict on test images
+# Predict on test images 
 predictions = []
-for test_img in test_images:
+gt_images = []
+
+for test_file, gt_file in zip(test_files, gt_files):
+    test_img = tifffile.imread(test_file)
+    test_img = test_img[np.newaxis, ...] 
+
     pred = careamist.predict(
-        source=test_img,
+        source=test_file, 
+        data_type="tiff",
+        axes="YX",
         tile_size=(128, 128),
         tile_overlap=(48, 48)
     )
+    
     predictions.append(pred[0].squeeze())
+    gt_images.append(tifffile.imread(gt_file))
 
 # Calculate metrics
 psnr_total = 0
