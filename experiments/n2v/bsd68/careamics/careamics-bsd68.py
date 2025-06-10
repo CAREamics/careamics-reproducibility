@@ -46,6 +46,17 @@ config = create_n2v_configuration(
     num_epochs=50,
     masked_pixel_percentage=0.2,
     struct_n2v_axis="none",
+    logger="wandb", 
+    model_params={
+        "num_channels_init": 32
+    },
+    optimizer_params={
+        "lr": 0.0004
+    },
+    lr_scheduler_params={
+        "factor": 0.5,
+        "patience": 10
+    }
 )
 
 #### Initialize CAREamist
@@ -71,11 +82,10 @@ gt_images = []
 
 for test_file, gt_file in zip(test_files, gt_files):
     test_img = tifffile.imread(test_file)
-    test_img = test_img[np.newaxis, ...] 
 
     pred = careamist.predict(
-        source=test_file, 
-        data_type="tiff",
+        source=test_img, 
+        data_type="array",
         axes="YX",
         tile_size=(128, 128),
         tile_overlap=(48, 48)
