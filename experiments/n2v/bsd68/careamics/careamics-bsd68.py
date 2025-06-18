@@ -32,14 +32,33 @@ val_path.mkdir(parents=True, exist_ok=True)
 test_path.mkdir(parents=True, exist_ok=True)
 gt_path.mkdir(parents=True, exist_ok=True)
 
-#### training and validation data
-train_image = tifffile.imread(next(iter(train_path.rglob("*.tiff"))))[0]
-val_image = tifffile.imread(next(iter(val_path.rglob("*.tiff"))))[0]
+#### Load all training and validation data
+def load_images_from_path(path):
+    """Load all TIFF images from a directory into a numpy array."""
+    image_files = sorted(path.glob("*.tiff"))
+    images = []
+    
+    for file in image_files:
+        img = tifffile.imread(file)
+        if img.ndim == 3:  # Multi-frame TIFF
+            for frame in img:
+                images.append(frame)
+        else:  # Single frame
+            images.append(img)
+    
+    return np.array(images)
+
+# Load all training and validation images
+train_images = load_images_from_path(train_path)
+val_images = load_images_from_path(val_path)
+
+print(f"Loaded {len(train_images)} training images")
+print(f"Loaded {len(val_images)} validation images")
 
 #### configuration
 config = create_n2v_configuration(
     experiment_name="n2v_BSD",
-    data_type="tiff",
+    data_type="array",  # Changed from "tiff" to "array"
     axes="SYX",
     patch_size=(64, 64),
     batch_size=128,
@@ -64,8 +83,8 @@ careamist = CAREamist(source=config)
 
 #### Run training
 careamist.train(
-    train_source=train_path,
-    val_source=val_path
+    train_source=train_images,  # Pass arrays instead of paths
+    val_source=val_images
 )
 
 #############################################
