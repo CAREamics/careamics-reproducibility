@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# CAREamics - 2D Example for Convallaria Data
-# ---------------------------------------------------
+# CAREamics - 2D Noise2Void for Convallaria Dataset
+#---------------------------------------------------------------------------
+
 from pathlib import Path
 import numpy as np
 import tifffile
@@ -11,22 +12,26 @@ from careamics.config import create_n2v_configuration
 from careamics.utils.metrics import scale_invariant_psnr
 from microssim import micro_structural_similarity
 
-# Path to dataset
-conv_path = "/group/jug/datasets/Convallaria_diaphragm/20190520_tl_25um_50msec_05pc_488_130EM_Conv.tif"
+#### Load Dataset via Careamics Portfolio
+from careamics_portfolio import PortfolioManager
 
-# Load the stack and create ground truth
-conv_stack = tifffile.imread(conv_path)
-print(f"Convallaria stack shape: {conv_stack.shape}")
+# Download Convallaria dataset
+portfolio = PortfolioManager()
+files = portfolio.denoising.Convallaria.download(Path("data"))
+conv_stack = tifffile.imread(files[0])
 
 # Create ground truth by averaging all frames
 gt_image = np.mean(conv_stack, axis=0)
 
-# Select single noisy image for training (frame 50)
+# Select a single noisy image for training
 train_image = conv_stack[50]
+print(f"Ground truth shape: {gt_image.shape}")
+print(f"Training image shape: {train_image.shape}")
 
-#### configuration
+
+#### Configuration
 config = create_n2v_configuration(
-    experiment_name="n2v_convallaria",
+    experiment_name="convallaria_n2v",
     data_type="array",
     axes="YX",
     patch_size=(64, 64),
@@ -34,6 +39,16 @@ config = create_n2v_configuration(
     num_epochs=100,
     masked_pixel_percentage=0.2,
     struct_n2v_axis="none",
+    model_params={
+        "num_channels_init": 32
+    },
+    optimizer_params={
+        "lr": 0.0001
+    },
+    lr_scheduler_params={
+        "factor": 0.5,
+        "patience": 10
+    }
 )
 
 #### Initialize CAREamist
@@ -42,17 +57,24 @@ careamist = CAREamist(source=config)
 #### Run training
 careamist.train(
     train_source=train_image,
-    val_percentage=0.1,
+    val_percentage=0.1
 )
 
 #############################################
-############# Prediction ################### 
+############# Prediction ###################
 #############################################
 
-# Create test images from different frames
+# Predict on the training image
+prediction = careamist.predict(
+    source=train_image,
+    tile_size=(256, 256),
+    tile_overlap=(64, 64)
+)
+
+# Test on additional frames
 test_frames = [10, 25, 75, 90]
 predictions = []
-gt_images = []
+test_images = []
 
 for frame_idx in test_frames:
     test_img = conv_stack[frame_idx]
@@ -66,14 +88,15 @@ for frame_idx in test_frames:
     )
     
     predictions.append(pred[0].squeeze())
-    gt_images.append(gt_image)
+    test_images.append(test_img)
 
-# Calculate metrics
+# Calculate metrics against ground truth
 psnr_total = 0
 microssim_total = 0
-for pred, gt in zip(predictions, gt_images):
-    psnr_total += scale_invariant_psnr(gt, pred)
-    microssim_total += micro_structural_similarity(pred, gt)
+for pred, test_img in zip(predictions, test_images):
+    psnr_total += scale_invariant_psnr(gt_image, pred)
+    microssim_total += micro_structural_similarity(pred, gt_image)
 
 print(f"Average PSNR: {psnr_total / len(predictions):.2f}")
 print(f"Average MicroSSIM: {microssim_total / len(predictions):.2f}")
+print("Training and evaluation completed successfully!")
