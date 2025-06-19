@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# CAREamics - 2D Example for BSD68 Data
-# --------------------------------------
+# CAREamics - 2D Example for BSD68 Dataset
+# ----------------------------------------
 from pathlib import Path
 import numpy as np
 import tifffile
@@ -12,7 +12,7 @@ from careamics.config import create_n2v_configuration
 from careamics.utils.metrics import scale_invariant_psnr
 from microssim import micro_structural_similarity
 
-#### Import Dataset Portfolio
+#### Load Dataset via Careamics Portfolio
 portfolio = PortfolioManager()
 print(portfolio.denoising)
 
@@ -40,10 +40,10 @@ def load_images_from_path(path):
     
     for file in image_files:
         img = tifffile.imread(file)
-        if img.ndim == 3:  # Multi-frame TIFF
+        if img.ndim == 3: 
             for frame in img:
                 images.append(frame)
-        else:  # Single frame
+        else:  
             images.append(img)
     
     return np.array(images)
@@ -58,7 +58,7 @@ print(f"Loaded {len(val_images)} validation images")
 #### configuration
 config = create_n2v_configuration(
     experiment_name="n2v_BSD",
-    data_type="array",  # Changed from "tiff" to "array"
+    data_type="array", 
     axes="SYX",
     patch_size=(64, 64),
     batch_size=128,
@@ -83,7 +83,7 @@ careamist = CAREamist(source=config)
 
 #### Run training
 careamist.train(
-    train_source=train_images,  # Pass arrays instead of paths
+    train_source=train_images, 
     val_source=val_images
 )
 

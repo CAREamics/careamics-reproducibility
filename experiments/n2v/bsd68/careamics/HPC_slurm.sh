@@ -14,9 +14,6 @@ module load cuda/12.8
 
 # Activate environment and run script
 source /path/to/your/venv/bin/activate
-
-# Activate environment and run script
-source /home/diya.srivastava/miniforge3/bin/activate
 conda activate careamics
 
 # Run the script
