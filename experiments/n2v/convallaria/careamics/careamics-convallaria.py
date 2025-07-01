@@ -64,14 +64,6 @@ careamist.train(
 ############# Prediction ###################
 #############################################
 
-# Predict on the training image
-prediction = careamist.predict(
-    source=train_image,
-    tile_size=(256, 256),
-    tile_overlap=(64, 64)
-)
-
-# Test on additional frames
 test_frames = [10, 25, 75, 90]
 predictions = []
 test_images = []
@@ -91,12 +83,13 @@ for frame_idx in test_frames:
     test_images.append(test_img)
 
 # Calculate metrics against ground truth
-psnr_total = 0
-microssim_total = 0
-for pred, test_img in zip(predictions, test_images):
-    psnr_total += scale_invariant_psnr(gt_image, pred)
-    microssim_total += micro_structural_similarity(pred, gt_image)
+psnr_values = []
+microssim_values = []
 
-print(f"Average PSNR: {psnr_total / len(predictions):.2f}")
-print(f"Average MicroSSIM: {microssim_total / len(predictions):.2f}")
+for pred, test_img in zip(predictions, test_images):
+    psnr_values.append(scale_invariant_psnr(gt_image, pred))
+    microssim_values.append(micro_structural_similarity(pred, gt_image))
+
+print(f"Average PSNR: {np.mean(psnr_values):.2f} ± {np.std(psnr_values):.2f}")
+print(f"Average MicroSSIM: {np.mean(microssim_values):.2f} ± {np.std(microssim_values):.2f}")
 print("Training and evaluation completed successfully!")
