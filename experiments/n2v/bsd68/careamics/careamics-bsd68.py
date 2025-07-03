@@ -114,11 +114,11 @@ for test_file, gt_file in zip(test_files, gt_files):
     gt_images.append(tifffile.imread(gt_file))
 
 # Calculate metrics
-psnr_total = 0
-microssim_total = 0
+psnr_values = []
+microssim_values = []
 for pred, gt in zip(predictions, gt_images):
-    psnr_total += scale_invariant_psnr(gt, pred)
-    microssim_total += micro_structural_similarity(pred, gt)
+    psnr_values.append(scale_invariant_psnr(gt, pred))
+    microssim_values.append(micro_structural_similarity(pred, gt))
 
-print(f"Average PSNR: {psnr_total / len(predictions):.2f}")
-print(f"Average MicroSSIM: {microssim_total / len(predictions):.2f}")
+print(f"Average PSNR: {np.mean(psnr_values):.2f} ± {np.std(psnr_values):.2f}")
+print(f"Average MicroSSIM: {np.mean(microssim_values):.2f} ± {np.std(microssim_values):.2f}")

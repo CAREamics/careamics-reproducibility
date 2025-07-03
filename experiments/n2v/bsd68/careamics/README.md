@@ -25,8 +25,5 @@ config = create_n2v_configuration(
 ```
 
 ## Results
-From paper:
-TODO
-
-From script:
-TODO
+Average PSNR: 26.44 ± 2.68
+Average MicroSSIM: 0.75 ± 0.07
