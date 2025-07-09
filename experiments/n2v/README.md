@@ -41,6 +41,7 @@ tf-n2v.
 
 Using the scripts in this repository.
 
-|       |       TF      | torch (PPN2V) | CAREamics |
-|-------|---------------|---------------|-----------|
-| BSD68 | 26.7 +/- 2.53 |  27.34 +/- 3  |           |
+|  dataset   |    TF(PSNR)   | torch (PPN2V)(PSNR) | CAREamics(PSNR) |CAREamics (MicroSSIM)|
+|------------|---------------|---------------------|-----------------|---------------------|     
+| BSD68      | 26.7 +/- 2.53 |  27.34 +/- 3        |                 |                     |
+| Convallaria| 26.7 +/- 2.53 |  27.34 +/- 3        |      36.45      |         0.93        |           
