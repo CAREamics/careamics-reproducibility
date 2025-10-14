@@ -27,10 +27,10 @@ val_path = data_path / "val"
 test_path = data_path / "test" / "images"
 gt_path = data_path / "test" / "gt"
 
-train_path.mkdir(parents=True, exist_ok=True)
-val_path.mkdir(parents=True, exist_ok=True)
-test_path.mkdir(parents=True, exist_ok=True)
-gt_path.mkdir(parents=True, exist_ok=True)
+assert train_path.exists(), f"Training data not found at {train_path}"
+assert val_path.exists(), f"Validation data not found at {val_path}"
+assert test_path.exists(), f"Test data not found at {test_path}"
+assert gt_path.exists(), f"Ground truth data not found at {gt_path}"
 
 #### Load all training and validation data
 def load_images_from_path(path):
@@ -51,6 +51,7 @@ def load_images_from_path(path):
 # Load all training and validation images
 train_images = load_images_from_path(train_path)
 val_images = load_images_from_path(val_path)
+assert len(train_images) > 0 and len(val_images) > 0
 
 print(f"Loaded {len(train_images)} training images")
 print(f"Loaded {len(val_images)} validation images")
