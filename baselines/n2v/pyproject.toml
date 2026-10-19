@@ -1,0 +1,23 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "n2v-baseline"
+version = "0.1.0"
+requires-python = "==3.11.*"
+dependencies = [
+    "n2v==0.3.3",
+    "tensorflow[and-cuda]==2.15.1; sys_platform == 'linux'",
+    "tensorflow==2.15.1; sys_platform == 'darwin'",
+    "numpy<2",
+    "careamics-portfolio",
+    "typer",
+    "wandb",
+]
+
+[tool.hatch.build]
+dev-mode-dirs = ["../../src"]
+
+[tool.hatch.build.targets.wheel]
+bypass-selection = true
