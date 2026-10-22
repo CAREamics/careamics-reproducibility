@@ -1,8 +1,10 @@
 import json
 from datetime import datetime
+from pathlib import Path
 
 import numpy as np
 import tifffile
+import torch
 import typer
 import wandb
 from careamics import CAREamist
@@ -10,7 +12,7 @@ from careamics.config.factories import create_advanced_n2v_config
 from lightning.pytorch import seed_everything
 from skimage.metrics import structural_similarity
 
-from common import DATA_DIR, IMPL, RESULTS_DIR, RUNS_DIR, WANDB_PROJECT
+from common import DATA_DIR, RESULTS_DIR, RUNS_DIR, WANDB_PROJECT
 from common.cuda_timer import cuda_timer
 from common.metrics import psnr, scale_invariant_psnr
 from common.run_files import save_run_files
@@ -18,11 +20,8 @@ from common.run_meta import get_run_meta
 from common.wandb_utils import detach_wandb, setup_wandb
 from datasets.d2.bsd68 import bsd68
 
-ALGO = "n2v"
-DATASET = "bsd68"
-
 DATA_RANGE = 255.0
-NUM_WORKERS = 8
+NUM_WORKERS = 4
 TILE_SIZE = (128, 128)
 TILE_OVERLAP = (48, 48)
 PREDICT_BATCH = 8
@@ -30,16 +29,16 @@ N_IMAGES = 3
 
 
 def main(seed: int = 42, benchmark: bool = False):
+    # Setup
     seed_everything(seed, workers=True)
-    mode = "benchmark" if benchmark else "deterministic"
-    run_name = f"{IMPL}-{ALGO}-{DATASET}-s{seed}-{mode}"
+    mode = "bench" if benchmark else "det"
+    run_name = f"careamics-n2v-bsd68-s{seed}-{mode}"
     run_dir = (
         RUNS_DIR
-        / DATASET
-        / ALGO
+        / "bsd68"
+        / "n2v"
         / f"{run_name}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
     )
-    git = save_run_files(run_dir, __file__)
 
     data = bsd68(DATA_DIR)
     train_data = tifffile.imread(data.train / "DCNN400_train_gaussian25.tiff")
@@ -47,6 +46,7 @@ def main(seed: int = 42, benchmark: bool = False):
     val_data = tifffile.imread(data.val / "DCNN400_validation_gaussian25.tiff")
     val_data = val_data.astype(np.float32)
 
+    # Configuration
     config = create_advanced_n2v_config(
         experiment_name=run_name,
         data_type="array",
@@ -67,49 +67,58 @@ def main(seed: int = 42, benchmark: bool = False):
             "monitor": "val_loss",
             "mode": "min",
             "save_top_k": 1,
-            "save_last": True,
+            "save_last": False,
             "auto_insert_metric_name": False,
         },
         num_workers=NUM_WORKERS,
         seed=seed,
         logger="wandb",
     )
-
     careamist = CAREamist(config, work_dir=run_dir)
-    meta = {**get_run_meta(ALGO, DATASET, seed, mode), **git}
+
+    # Save metadata and run files
+    git = save_run_files(run_dir, __file__)
     full_config = config.model_dump(mode="json")
     (run_dir / "config.json").write_text(json.dumps(full_config, indent=2))
-    run_id = setup_wandb(
+    run_metadata = {**get_run_meta("n2v", "bsd68", seed, mode), **git}
+
+    # Add logger for wandb
+    run_metadata["wandb_run_id"] = setup_wandb(
         careamist,
         {
-            **meta,
+            **run_metadata,
             **{k: v for k, v in full_config.items() if k != "algorithm_config"},
         },
     )
 
+    # Train
     with cuda_timer() as train_timer:
         careamist.train(train_data=train_data, val_data=val_data)
-    epochs = careamist.trainer.current_epoch
-    best_checkpoint = careamist.trainer.checkpoint_callback.best_model_path
-    last_checkpoint = careamist.trainer.checkpoint_callback.last_model_path
-
     detach_wandb(careamist)
+    best_checkpoint = careamist.trainer.checkpoint_callback.best_model_path
+    careamist.trainer.save_checkpoint(Path(best_checkpoint).with_name("last.ckpt"))
+    epochs = careamist.trainer.current_epoch
+    run_metadata.update(
+        {
+            "train/epochs": epochs,
+            "train/seconds": train_timer["seconds"],
+            "train/seconds_per_epoch": train_timer["seconds"] / epochs,
+            "train/peak_memory_mib": train_timer["peak_memory_mib"],
+            "test/best/epoch": torch.load(best_checkpoint, weights_only=False)["epoch"]
+            + 1,
+            "test/last/epoch": epochs,
+            "checkpoint/best": best_checkpoint,
+            "checkpoint/last": str(Path(best_checkpoint).with_name("last.ckpt")),
+        }
+    )
 
+    # Predict
     predictions_dir = run_dir / "predictions"
     predictions_dir.mkdir()
 
-    result = {
-        "train/epochs": epochs,
-        "train/seconds": train_timer["seconds"],
-        "train/seconds_per_epoch": train_timer["seconds"] / epochs,
-        "train/peak_memory_mib": train_timer["peak_memory_mib"],
-        "checkpoint/best": best_checkpoint,
-        "checkpoint/last": last_checkpoint,
-    }
-    per_image = {}
     images = {}
-    for weights, checkpoint in [("best", best_checkpoint), ("last", last_checkpoint)]:
-        psnrs, si_psnrs, ssims, images[weights] = [], [], [], []
+    for checkpoint in ["best", "last"]:
+        psnrs, si_psnrs, ssims, images[checkpoint] = [], [], [], []
         with cuda_timer() as predict_timer:
             for i, (noisy_path, gt_path) in enumerate(
                 zip(
@@ -121,7 +130,6 @@ def main(seed: int = 42, benchmark: bool = False):
                 noisy = noisy.astype(np.float32)
                 gt = tifffile.imread(gt_path)
                 gt = gt.astype(np.float32)
-
                 predictions, _sources = careamist.predict(
                     noisy,
                     axes="YX",
@@ -129,67 +137,64 @@ def main(seed: int = 42, benchmark: bool = False):
                     tile_overlap=TILE_OVERLAP,
                     batch_size=PREDICT_BATCH,
                     num_workers=NUM_WORKERS,
-                    checkpoint=checkpoint,
+                    checkpoint=run_metadata[f"checkpoint/{checkpoint}"],
                 )
-                frame = np.asarray(predictions[0]).squeeze()
+                prediction = np.asarray(predictions[0]).squeeze()
 
-                psnrs.append(float(psnr(gt, frame, DATA_RANGE)))
-                si_psnrs.append(float(scale_invariant_psnr(gt, frame)))
+                psnrs.append(psnr(gt, prediction, DATA_RANGE))
+                si_psnrs.append(scale_invariant_psnr(gt, prediction))
                 ssims.append(
-                    float(structural_similarity(gt, frame, data_range=DATA_RANGE))
+                    structural_similarity(gt, prediction, data_range=DATA_RANGE)
                 )
 
                 if i < N_IMAGES:
                     tifffile.imwrite(
-                        predictions_dir / f"{weights}_{noisy_path.stem}.tif", frame
+                        predictions_dir / f"{checkpoint}_{noisy_path.stem}.tif",
+                        prediction,
                     )
-                    images[weights].append(
+                    images[checkpoint].append(
                         wandb.Image(
                             np.clip(
-                                np.concatenate([noisy, frame, gt], axis=1),
+                                np.concatenate([noisy, prediction, gt], axis=1),
                                 0,
                                 DATA_RANGE,
                             ).astype(np.uint8),
                             caption=f"{noisy_path.name}: noisy | prediction | gt",
                         )
                     )
-        result[f"test/{weights}/psnr"] = float(np.mean(psnrs))
-        result[f"test/{weights}/si_psnr"] = float(np.mean(si_psnrs))
-        result[f"test/{weights}/ssim"] = float(np.mean(ssims))
-        result[f"test/{weights}/seconds"] = predict_timer["seconds"]
-        result[f"test/{weights}/peak_memory_mib"] = predict_timer["peak_memory_mib"]
-        per_image[f"test/{weights}/psnr_per_image"] = psnrs
-        per_image[f"test/{weights}/si_psnr_per_image"] = si_psnrs
-        per_image[f"test/{weights}/ssim_per_image"] = ssims
+        run_metadata[f"test/{checkpoint}/psnr"] = float(np.mean(psnrs))
+        run_metadata[f"test/{checkpoint}/si_psnr"] = float(np.mean(si_psnrs))
+        run_metadata[f"test/{checkpoint}/ssim"] = float(np.mean(ssims))
+        run_metadata[f"test/{checkpoint}/seconds"] = predict_timer["seconds"]
+        run_metadata[f"test/{checkpoint}/peak_memory_mib"] = predict_timer[
+            "peak_memory_mib"
+        ]
+        run_metadata[f"test/{checkpoint}/psnr_per_image"] = psnrs
+        run_metadata[f"test/{checkpoint}/si_psnr_per_image"] = si_psnrs
+        run_metadata[f"test/{checkpoint}/ssim_per_image"] = ssims
 
-    summary = {
-        **meta,
-        "wandb_project": WANDB_PROJECT,
-        "wandb_run_id": run_id,
-        **result,
-    }
-    (run_dir / "summary.json").write_text(json.dumps(summary, indent=2))
-    (run_dir / "per_image.json").write_text(json.dumps(per_image, indent=2))
+    # Save results
+    (run_dir / "summary.json").write_text(json.dumps(run_metadata, indent=2))
 
-    path = RESULTS_DIR / DATASET / ALGO / f"{run_dir.name}.json"
+    path = RESULTS_DIR / "bsd68" / "n2v" / f"{run_dir.name}.json"
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps({**summary, "careamics_config": full_config, **per_image}, indent=2)
-    )
+    path.write_text(json.dumps({**run_metadata, "config": full_config}, indent=2))
 
     with wandb.init(
         project=WANDB_PROJECT,
-        id=run_id,
+        id=run_metadata["wandb_run_id"],
         resume="must",
         dir=run_dir / "wandb_logs",
     ) as run:
-        run.summary.update(result)
+        run.summary.update(
+            {
+                key: value
+                for key, value in run_metadata.items()
+                if key.startswith(("train/", "test/", "checkpoint/"))
+                and not key.endswith("_per_image")
+            }
+        )
         run.log({f"test/{weights}/images": images[weights] for weights in images})
-
-    print(
-        f"{run_name}  PSNR best {result['test/best/psnr']:.4f}"
-        f"  last {result['test/last/psnr']:.4f}  -> {run_dir}"
-    )
 
 
 if __name__ == "__main__":

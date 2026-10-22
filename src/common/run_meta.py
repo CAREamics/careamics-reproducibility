@@ -4,13 +4,11 @@ from importlib.metadata import distribution
 
 import torch
 
-from common import IMPL
-
 
 def get_run_meta(algo, dataset, seed, mode):
     careamics = distribution("careamics")
     return {
-        "impl": IMPL,
+        "impl": "careamics",
         "algo": algo,
         "dataset": dataset,
         "seed": seed,

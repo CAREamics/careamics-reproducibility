@@ -8,4 +8,3 @@ DATA_DIR = Path("data")
 RUNS_DIR = Path("/project/careamics/repro")
 RESULTS_DIR = Path("results")
 WANDB_PROJECT = "careamics-reproducibility"
-IMPL = "careamics"

@@ -1,6 +1,5 @@
 import json
 import platform
-import time
 from datetime import datetime
 from importlib.metadata import version
 
@@ -16,20 +15,18 @@ from wandb.integration.keras import WandbMetricsLogger
 from common import DATA_DIR, RESULTS_DIR, RUNS_DIR, WANDB_PROJECT
 from common.metrics import psnr, scale_invariant_psnr
 from common.run_files import save_run_files
+from common.tf_timer import tf_timer
 from datasets.d2.bsd68 import bsd68
-
-IMPL = "original"
-ALGO = "n2v"
-DATASET = "bsd68"
 
 DATA_RANGE = 255.0
 N_IMAGES = 3
 
 
 def main(seed: int = 42):
+    # Intialization
     tf.keras.utils.set_random_seed(seed)
-    mode = "benchmark"
-    run_name = f"{IMPL}-{ALGO}-{DATASET}-s{seed}-{mode}"
+    mode = "bench"
+    run_name = f"orig-n2v-bsd68-s{seed}-{mode}"
 
     data = bsd68(DATA_DIR)
     train_data = tifffile.imread(data.train / "DCNN400_train_gaussian25.tiff")
@@ -37,6 +34,7 @@ def main(seed: int = 42):
     val_data = tifffile.imread(data.val / "DCNN400_validation_gaussian25.tiff")
     val_data = val_data[..., np.newaxis]
 
+    # Configuration
     config = N2VConfig(
         train_data,
         unet_kern_size=3,
@@ -56,18 +54,19 @@ def main(seed: int = 42):
     model = N2V(
         config,
         f"{run_name}-{datetime.now().strftime('%Y%m%d-%H%M%S')}",
-        basedir=RUNS_DIR / DATASET / ALGO,
+        basedir=RUNS_DIR / "bsd68" / "n2v",
     )
     model.prepare_for_training(metrics=())
+
+    # Save metadata and run files
     run_dir = model.logdir
     git = save_run_files(run_dir, __file__)
-
     gpu = tf.config.list_physical_devices("GPU")[0]
     build = tf.sysconfig.get_build_info()
-    meta = {
-        "impl": IMPL,
-        "algo": ALGO,
-        "dataset": DATASET,
+    run_metadata = {
+        "impl": "orig",
+        "algo": "n2v",
+        "dataset": "bsd68",
         "seed": seed,
         "mode": mode,
         "n2v_version": version("n2v"),
@@ -79,31 +78,96 @@ def main(seed: int = 42):
         **git,
     }
 
+    # Add logger for wandb
     run = wandb.init(
         project=WANDB_PROJECT,
         id=run_dir.name,
         name=run_name,
-        group=DATASET,
+        group="bsd68",
         tags=[
-            f"impl:{IMPL}",
-            f"algo:{ALGO}",
-            f"dataset:{DATASET}",
+            "impl:orig",
+            "algo:n2v",
+            "dataset:bsd68",
             f"mode:{mode}",
         ],
-        config={**vars(config), **meta},
+        config={**vars(config), **run_metadata},
         dir=run_dir,
         settings=wandb.Settings(save_code=True, code_dir="src"),
     )
     model.callbacks.append(WandbMetricsLogger())
+    run_metadata["wandb_run_id"] = run.id
 
-    tf.config.experimental.reset_memory_stats("GPU:0")
-    start = time.perf_counter()
-    history = model.train(train_data, val_data)
-    train_seconds = time.perf_counter() - start
-    train_peak_memory_mib = (
-        tf.config.experimental.get_memory_info("GPU:0")["peak"] / 2**20
-    )
+    # Train
+    with tf_timer() as train_timer:
+        history = model.train(train_data, val_data)
     epochs = len(history.history["loss"])
+    run_metadata.update(
+        {
+            "train/epochs": epochs,
+            "train/seconds": train_timer["seconds"],
+            "train/seconds_per_epoch": train_timer["seconds"] / epochs,
+            "train/peak_memory_mib": train_timer["peak_memory_mib"],
+            "test/best/epoch": int(np.argmin(history.history["val_loss"])) + 1,
+            "test/last/epoch": epochs,
+        }
+    )
+
+    # Predict
+    predictions_dir = run_dir / "predictions"
+    predictions_dir.mkdir()
+
+    images = {}
+    for checkpoint in ["best", "last"]:
+        model.load_weights(f"weights_{checkpoint}.h5")
+        psnrs, si_psnrs, ssims, images[checkpoint] = [], [], [], []
+        with tf_timer() as predict_timer:
+            for i, (noisy_path, gt_path) in enumerate(
+                zip(
+                    sorted(data.test.glob("*.tif*")),
+                    sorted(data.test_target.glob("*.tif*")),
+                )
+            ):
+                noisy = tifffile.imread(noisy_path)
+                gt = tifffile.imread(gt_path)
+                gt = gt.astype(np.float32)
+                prediction = model.predict(noisy, "YX", tta=False)
+
+                psnrs.append(psnr(gt, prediction, DATA_RANGE))
+                si_psnrs.append(scale_invariant_psnr(gt, prediction))
+                ssims.append(
+                    structural_similarity(gt, prediction, data_range=DATA_RANGE)
+                )
+
+                if i < N_IMAGES:
+                    tifffile.imwrite(
+                        predictions_dir / f"{checkpoint}_{noisy_path.stem}.tif",
+                        prediction,
+                    )
+                    images[checkpoint].append(
+                        wandb.Image(
+                            np.clip(
+                                np.concatenate([noisy, prediction, gt], axis=1),
+                                0,
+                                DATA_RANGE,
+                            ).astype(np.uint8),
+                            caption=f"{noisy_path.name}: noisy | prediction | gt",
+                        )
+                    )
+        run_metadata[f"test/{checkpoint}/psnr"] = float(np.mean(psnrs))
+        run_metadata[f"test/{checkpoint}/si_psnr"] = float(np.mean(si_psnrs))
+        run_metadata[f"test/{checkpoint}/ssim"] = float(np.mean(ssims))
+        run_metadata[f"test/{checkpoint}/seconds"] = predict_timer["seconds"]
+        run_metadata[f"test/{checkpoint}/peak_memory_mib"] = predict_timer[
+            "peak_memory_mib"
+        ]
+        run_metadata[f"checkpoint/{checkpoint}"] = str(
+            run_dir / f"weights_{checkpoint}.h5"
+        )
+        run_metadata[f"test/{checkpoint}/psnr_per_image"] = psnrs
+        run_metadata[f"test/{checkpoint}/si_psnr_per_image"] = si_psnrs
+        run_metadata[f"test/{checkpoint}/ssim_per_image"] = ssims
+
+    # Save results
     (run_dir / "history.json").write_text(
         json.dumps(
             {
@@ -113,89 +177,22 @@ def main(seed: int = 42):
             indent=2,
         )
     )
+    (run_dir / "summary.json").write_text(json.dumps(run_metadata, indent=2))
 
-    predictions_dir = run_dir / "predictions"
-    predictions_dir.mkdir()
-
-    result = {
-        "train/epochs": epochs,
-        "train/seconds": train_seconds,
-        "train/seconds_per_epoch": train_seconds / epochs,
-        "train/peak_memory_mib": train_peak_memory_mib,
-    }
-    per_image = {}
-    images = {}
-    for weights in ["best", "last"]:
-        model.load_weights(f"weights_{weights}.h5")
-        psnrs, si_psnrs, ssims, images[weights] = [], [], [], []
-        tf.config.experimental.reset_memory_stats("GPU:0")
-        start = time.perf_counter()
-        for i, (noisy_path, gt_path) in enumerate(
-            zip(
-                sorted(data.test.glob("*.tif*")),
-                sorted(data.test_target.glob("*.tif*")),
-            )
-        ):
-            noisy = tifffile.imread(noisy_path)
-            gt = tifffile.imread(gt_path)
-            gt = gt.astype(np.float32)
-            prediction = model.predict(noisy, "YX", tta=False)
-
-            psnrs.append(float(psnr(gt, prediction, DATA_RANGE)))
-            si_psnrs.append(float(scale_invariant_psnr(gt, prediction)))
-            ssims.append(
-                float(structural_similarity(gt, prediction, data_range=DATA_RANGE))
-            )
-
-            if i < N_IMAGES:
-                tifffile.imwrite(
-                    predictions_dir / f"{weights}_{noisy_path.stem}.tif", prediction
-                )
-                images[weights].append(
-                    wandb.Image(
-                        np.clip(
-                            np.concatenate([noisy, prediction, gt], axis=1),
-                            0,
-                            DATA_RANGE,
-                        ).astype(np.uint8),
-                        caption=f"{noisy_path.name}: noisy | prediction | gt",
-                    )
-                )
-        result[f"test/{weights}/psnr"] = float(np.mean(psnrs))
-        result[f"test/{weights}/si_psnr"] = float(np.mean(si_psnrs))
-        result[f"test/{weights}/ssim"] = float(np.mean(ssims))
-        result[f"test/{weights}/seconds"] = time.perf_counter() - start
-        result[f"test/{weights}/peak_memory_mib"] = (
-            tf.config.experimental.get_memory_info("GPU:0")["peak"] / 2**20
-        )
-        result[f"checkpoint/{weights}"] = str(run_dir / f"weights_{weights}.h5")
-        per_image[f"test/{weights}/psnr_per_image"] = psnrs
-        per_image[f"test/{weights}/si_psnr_per_image"] = si_psnrs
-        per_image[f"test/{weights}/ssim_per_image"] = ssims
-
-    summary = {
-        **meta,
-        "wandb_project": WANDB_PROJECT,
-        "wandb_run_id": run.id,
-        **result,
-    }
-    (run_dir / "summary.json").write_text(json.dumps(summary, indent=2))
-    (run_dir / "per_image.json").write_text(json.dumps(per_image, indent=2))
-
-    path = RESULTS_DIR / DATASET / ALGO / f"{run_dir.name}.json"
+    path = RESULTS_DIR / "bsd68" / "n2v" / f"{run_dir.name}.json"
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps({**summary, "n2v_config": vars(config), **per_image}, indent=2)
-    )
+    path.write_text(json.dumps({**run_metadata, "config": vars(config)}, indent=2))
 
-    run.summary.update(result)
+    run.summary.update(
+        {
+            key: value
+            for key, value in run_metadata.items()
+            if key.startswith(("train/", "test/", "checkpoint/"))
+            and not key.endswith("_per_image")
+        }
+    )
     run.log({f"test/{weights}/images": images[weights] for weights in images})
     run.finish()
-
-    print(
-        f"{run_name}  PSNR best {result['test/best/psnr']:.4f}"
-        f"  last {result['test/last/psnr']:.4f}  -> {run_dir}"
-    )
 
 
 if __name__ == "__main__":
