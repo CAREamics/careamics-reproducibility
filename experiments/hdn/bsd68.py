@@ -24,10 +24,6 @@ from common.wandb_utils import detach_wandb, setup_wandb
 from datasets.d2.bsd68 import bsd68
 
 DATA_RANGE = 255.0
-NUM_WORKERS = 8
-TILE_SIZE = (128, 128)
-TILE_OVERLAP = (48, 48)
-PREDICT_BATCH = 8
 N_IMAGES = 3
 
 
@@ -114,7 +110,7 @@ def main(seed: int = 42, benchmark: bool = False):
             "patience": 100,
             "min_delta": 0.0,
         },
-        num_workers=NUM_WORKERS,
+        num_workers=8,
         seed=seed,
         logger="wandb",
     )
@@ -182,10 +178,10 @@ def main(seed: int = 42, benchmark: bool = False):
                 predictions, _uncertainty, _sources = careamist.predict(
                     noisy,
                     axes="YX",
-                    tile_size=TILE_SIZE,
-                    tile_overlap=TILE_OVERLAP,
-                    batch_size=PREDICT_BATCH,
-                    num_workers=NUM_WORKERS,
+                    tile_size=(128, 128),
+                    tile_overlap=(48, 48),
+                    batch_size=8,
+                    num_workers=8,
                     n_predictions=100,
                     checkpoint=run_metadata[f"checkpoint/{checkpoint}"],
                 )
