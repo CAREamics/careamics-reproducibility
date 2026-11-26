@@ -22,19 +22,10 @@ dependencies = [
 ]
 
 [tool.uv.sources]
-careamics = { git = "https://github.com/CAREamics/careamics.git", rev = "dev/microsplit_api" }
+careamics = { git = "https://github.com/CAREamics/careamics.git", branch = "main" }
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/common", "src/datasets"]
 
-[tool.ruff]
-line-length = 88
-
-[tool.ruff.lint.per-file-ignores]
-"src/common/metrics.py" = ["F821", "UP007"]
-
 [tool.black]
 line-length = 88
-
-[tool.ruff.lint.isort]
-known-third-party = ["careamics"]
