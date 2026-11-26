@@ -24,11 +24,17 @@ DATA_RANGE = 255.0
 N_IMAGES = 3
 
 
-def main(seed: int = 42, benchmark: bool = False):
+def main(
+    seed: int = 42,
+    benchmark: bool = False,
+    tag: str = "",
+    filters: int = 32,
+    residual: bool = False,
+):
     # Setup
     seed_everything(seed, workers=True)
     mode = "bench" if benchmark else "det"
-    run_name = f"careamics-n2v-bsd68-s{seed}-{mode}"
+    run_name = f"careamics-n2v-bsd68{tag}-s{seed}-{mode}"
     run_dir = (
         RUNS_DIR
         / "bsd68"
@@ -52,6 +58,11 @@ def main(seed: int = 42, benchmark: bool = False):
         num_epochs=100,
         augmentations=["x_flip", "y_flip", "rotate_90"],
         use_n2v2=False,
+        model_params={
+            "depth": 2,
+            "num_channels_init": filters,
+            "residual": residual,
+        },
         trainer_params={
             "precision": "32-true",
             "accelerator": "gpu",

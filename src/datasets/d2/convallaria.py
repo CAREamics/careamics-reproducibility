@@ -3,11 +3,13 @@
 from pathlib import Path
 
 import numpy as np
-from careamics_portfolio import PortfolioManager
+import pooch
 from tifffile import imread
 
 from datasets.data import Data
 
+URL = "https://zenodo.org/records/5156913/files/Convallaria_diaphragm.zip"
+KNOWN_HASH = "sha256:d2d60c12b2331fc69f708139361cc2ee0665ceaa7291af98a68d9964f5f1490b"
 STACK_NAME = "20190520_tl_25um_50msec_05pc_488_130EM_Conv.tif"
 CALIBRATION_NAME = "20190726_tl_50um_500msec_wf_130EM_FD.tif"
 TRAIN_SPLIT = 0.85
@@ -15,10 +17,17 @@ EVAL_CROP = 512
 
 
 def convallaria(data_dir: Path):
-    downloaded = PortfolioManager().denoising.Convallaria.download(data_dir)
-    stack = imread(data_dir / STACK_NAME)
+    pooch.retrieve(
+        url=URL,
+        known_hash=KNOWN_HASH,
+        fname="Convallaria_diaphragm.zip",
+        path=data_dir,
+        processor=pooch.Unzip(extract_dir="Convallaria"),
+    )
+    data_path = data_dir / "Convallaria" / "Convallaria_diaphragm"
+    stack = imread(data_path / STACK_NAME)
     stack = stack.astype(np.float32)
-    observation = imread(data_dir / CALIBRATION_NAME)
+    observation = imread(data_path / CALIBRATION_NAME)
     observation = observation.astype(np.float32)
 
     split = int(TRAIN_SPLIT * stack.shape[0])
